@@ -6,6 +6,9 @@ import Core
 main :: IO ()
 main = hspec $ do
   describe "Core" $
-    describe "summarize" $
-      it "summarizes no events as an empty game" $ do
+    describe "summarize" $ do
+      it "summarizes no events as an empty game" $
         summarize [] == emptyGame
+
+      it "summarizes a single event" $
+        summarize [StonePlaced Black (1, 1)] == gameOf [((1, 1), Black)]
