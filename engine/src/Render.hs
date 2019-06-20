@@ -10,7 +10,7 @@ import Data.List (intersperse)
 render :: State -> String
 render state = do
   y <- [0..snd (widthAndHeight state)-1]
-  (intersperse '-' $ genRow y) ++ "\n"
+  intersperse '-' (genRow y) ++ "\n"
 
   where
     genRow y = do
