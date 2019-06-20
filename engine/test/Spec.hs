@@ -34,7 +34,7 @@ main = hspec $ do
 
   describe "Render" $
     describe "render" $ do
-      describe "given any game" $ do
+      describe "given any game" $
         it "renders a board of the correct size" $
           property $ \game -> length (render game) `shouldBe` 13*13 + 13*12 + 13
 
@@ -48,21 +48,21 @@ main = hspec $ do
       it "renders the correct number of stones" $ do
         let game = gameOf [((1, 1), Black), ((2, 1), White), ((5, 8), Black), ((6, 8), White), ((5, 11), Black), ((6, 9), Black)]
 
-        (length $ filter (== blackPiece) $ render game) `shouldBe` 4
-        (length $ filter (== whitePiece) $ render game) `shouldBe` 2
+        length (filter (== blackPiece) $ render game) `shouldBe` 4
+        length (filter (== whitePiece) $ render game) `shouldBe` 2
 
       it "renders using zero-based indexes" $ do
         let game = gameOf [((0, 0), Black)]
 
-        (tryHead $ render game) `shouldBe` Just blackPiece
+        tryHead (render game) `shouldBe` Just blackPiece
 
   describe "Commands" $
     describe "execute" $ do
-      it "results in a new state" $ do
+      it "results in a new state" $
         fst <$> execute (Place Black (5, 4)) emptyGame `shouldBe` Right (withTurn White $ gameOf [((5, 4), Black)])
 
-      it "results in events" $ do
+      it "results in events" $
         snd <$> execute (Place Black (5, 4)) emptyGame `shouldBe` Right [StonePlaced Black (5, 4)]
 
-      it "flips the turn to the other player" $ do
-        (turn . fst) <$> execute (Place Black (5, 4)) emptyGame `shouldBe` Right White
+      it "flips the turn to the other player" $
+        turn . fst <$> execute (Place Black (5, 4)) emptyGame `shouldBe` Right White
