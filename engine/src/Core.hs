@@ -10,6 +10,9 @@ module Core
   , State
   , widthAndHeight
   , pieceAt
+  , nextTurn
+  , turn
+  , withTurn
   ) where
 
 import qualified Data.Map.Strict as M
@@ -22,27 +25,35 @@ data GameSize = Standard deriving (Eq, Show)
 
 data Event = StonePlaced Stone Position deriving (Eq, Show)
 type Board = M.Map Position Stone
-type State = (Board, GameSize)
+type State = (Board, GameSize, Stone)
 
 widthAndHeight :: State -> Position
-widthAndHeight (_, Standard) = (13, 13)
+widthAndHeight (_, Standard, _) = (13, 13)
+
+turn :: State -> Stone
+turn (_, _, t) = t
+
+withTurn :: Stone -> State -> State
+withTurn event (b, s, t) = (b, s, nextTurn t)
 
 pieceAt :: Position -> State -> Maybe Stone
-pieceAt point (game, _) = M.lookup point game
+pieceAt point (game, _, _) = M.lookup point game
 
 emptyGame :: State
-emptyGame = (M.empty, Standard)
+emptyGame = (M.empty, Standard, Black)
 
 gameOf :: [(Position, Stone)] -> State
-gameOf vs = (M.fromList vs, Standard)
+gameOf vs = (M.fromList vs, Standard, Black)
 
-track :: Event -> State -> State 
-track event state = (track' event $ fst state, snd state)
+track :: Event -> State -> State
+track event (b, s, t) = (track' event b, s, nextTurn t)
+
+nextTurn :: Stone -> Stone
+nextTurn Black = White
+nextTurn White = Black
 
 track' :: Event -> Board -> Board
-track' (StonePlaced color pos) board = M.insert pos color board
+track' (StonePlaced color pos) = M.insert pos color
 
 summarize :: [Event] -> State
-summarize = standardSized . foldr track' M.empty
-  where
-    standardSized board = (board, Standard)
+summarize = foldr track emptyGame

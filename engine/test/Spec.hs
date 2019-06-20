@@ -17,13 +17,20 @@ tryHead [] = Nothing
 
 main :: IO ()
 main = hspec $ do
-  describe "Core" $
+  describe "Core" $ do
+    describe "a standard game" $ do
+      it "is 13x13" $
+        widthAndHeight emptyGame `shouldBe` (13, 13)
+
+      it "starts with black" $
+        turn emptyGame `shouldBe` Black
+
     describe "summarize" $ do
       it "summarizes no events as an empty game" $
-        summarize [] == emptyGame
+        summarize [] `shouldBe` emptyGame
 
-      it "summarizes a single event" $
-        summarize [StonePlaced Black (1, 1)] == gameOf [((1, 1), Black)]
+      it "summarizes a single event, flipping the turn" $
+        turn (summarize [StonePlaced Black (1, 1)]) `shouldBe` White
 
   describe "Render" $
     describe "render" $ do
@@ -52,7 +59,10 @@ main = hspec $ do
   describe "Commands" $
     describe "execute" $ do
       it "results in a new state" $ do
-        fst <$> execute (Place Black (5, 4)) emptyGame `shouldBe` Right (gameOf [((5, 4), Black)])
+        fst <$> execute (Place Black (5, 4)) emptyGame `shouldBe` Right (withTurn White $ gameOf [((5, 4), Black)])
 
       it "results in events" $ do
         snd <$> execute (Place Black (5, 4)) emptyGame `shouldBe` Right [StonePlaced Black (5, 4)]
+
+      it "flips the turn to the other player" $ do
+        (turn . fst) <$> execute (Place Black (5, 4)) emptyGame `shouldBe` Right White
