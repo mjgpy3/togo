@@ -37,6 +37,7 @@ executables:
     dependencies:
     - engine
     - containers
+    - ansi-terminal
 
 tests:
   engine-test:
