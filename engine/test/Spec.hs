@@ -3,6 +3,7 @@ import Test.QuickCheck
 import Control.Exception (evaluate)
 import Core
 import Render
+import Commands
 
 instance Arbitrary Stone where
   arbitrary = elements [Black, White]
@@ -47,3 +48,11 @@ main = hspec $ do
         let game = gameOf [((0, 0), Black)]
 
         (tryHead $ render game) `shouldBe` Just blackPiece
+
+  describe "Commands" $
+    describe "execute" $ do
+      it "results in a new state" $ do
+        fst <$> execute (Place Black (5, 4)) emptyGame `shouldBe` Right (gameOf [((5, 4), Black)])
+
+      it "results in events" $ do
+        snd <$> execute (Place Black (5, 4)) emptyGame `shouldBe` Right [StonePlaced Black (5, 4)]
