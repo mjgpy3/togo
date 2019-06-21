@@ -18,3 +18,6 @@ tests =
 
       it "cannot be placed atop an existing stone" $
         execute (Place White (1, 1)) (gameOf [((1, 1), Black)]) `shouldBe` Left LocationAlreadyOccupied
+
+      it "cannot be placed out of turn" $
+        execute (Place White (1, 1)) emptyGame `shouldBe` Left OutOfTurn

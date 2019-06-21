@@ -4,13 +4,14 @@ module Commands
   , Error(..)
   ) where
 
-import Core (State, Event(..), Stone, Position, track, pieceAt)
+import Core (State, Event(..), Stone, Position, track, pieceAt, turn)
 
 data Command
   = Place Stone Position
 
 data Error
   = LocationAlreadyOccupied
+  | OutOfTurn
   deriving (Eq, Show)
 
 type CommandResult = Either Error (State, [Event])
@@ -20,8 +21,18 @@ execute command state = do
   events <- executeEvents command state
   pure (foldr track state events, events)
 
+guardNotOccupied :: Position -> State -> Either Error ()
+guardNotOccupied pos state =
+  maybe (pure ()) (const $ Left LocationAlreadyOccupied) $ pieceAt pos state
+
+guardTurn :: Stone -> State -> Either Error ()
+guardTurn stone state =
+  if turn state == stone
+  then pure ()
+  else Left OutOfTurn
+
 executeEvents :: Command -> State -> Either Error [Event]
-executeEvents (Place s p) state =
-  case pieceAt p state of
-    Just _ -> Left LocationAlreadyOccupied
-    _ -> Right [StonePlaced s p]
+executeEvents (Place s p) state = do
+  guardNotOccupied p state
+  guardTurn s state
+  pure [StonePlaced s p]
