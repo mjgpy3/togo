@@ -20,7 +20,7 @@ tests =
     describe "render" $ do
       describe "given any game" $
         it "renders a board of the correct size" $
-          property $ \game -> length (render game) `shouldBe` 13*13 + 13*12 + 13
+          property $ \game -> length (render game) `shouldBe` 19*19 + 19*18 + 19
 
       describe "given an empty game" $ do
         it "renders no stones" $

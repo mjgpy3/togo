@@ -28,7 +28,7 @@ type Board = M.Map Position Stone
 type State = (Board, GameSize, Stone)
 
 widthAndHeight :: State -> Position
-widthAndHeight (_, Standard, _) = (13, 13)
+widthAndHeight (_, Standard, _) = (19, 19)
 
 turn :: State -> Stone
 turn (_, _, t) = t

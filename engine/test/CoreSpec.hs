@@ -6,8 +6,8 @@ import Core
 tests =
   describe "Core" $ do
     describe "a standard game" $ do
-      it "is 13x13" $
-        widthAndHeight emptyGame `shouldBe` (13, 13)
+      it "is 19x19" $
+        widthAndHeight emptyGame `shouldBe` (19, 19)
 
       it "starts with black" $
         turn emptyGame `shouldBe` Black

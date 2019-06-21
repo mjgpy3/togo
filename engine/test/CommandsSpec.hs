@@ -27,7 +27,7 @@ tests =
 
       it "cannot be placed out of bounds" $ do
         execute (Place Black (-1, 1)) emptyGame `shouldBe` Left OutOfBounds
-        execute (Place Black (1, 13)) emptyGame `shouldBe` Left OutOfBounds
+        execute (Place Black (1, 19)) emptyGame `shouldBe` Left OutOfBounds
 
       it "placement is zero-based in index" $
         isOkay $ execute (Place Black (0, 0)) emptyGame
