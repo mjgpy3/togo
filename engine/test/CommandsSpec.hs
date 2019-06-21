@@ -4,6 +4,9 @@ import Test.Hspec
 import Core
 import Commands
 
+isOkay (Right _) = True
+isOkay _ = False
+
 tests =
   describe "Commands" $
     describe "when placing a stone" $ do
@@ -21,3 +24,10 @@ tests =
 
       it "cannot be placed out of turn" $
         execute (Place White (1, 1)) emptyGame `shouldBe` Left OutOfTurn
+
+      it "cannot be placed out of bounds" $ do
+        execute (Place Black (-1, 1)) emptyGame `shouldBe` Left OutOfBounds
+        execute (Place Black (1, 13)) emptyGame `shouldBe` Left OutOfBounds
+
+      it "placement is zero-based in index" $
+        isOkay $ execute (Place Black (0, 0)) emptyGame

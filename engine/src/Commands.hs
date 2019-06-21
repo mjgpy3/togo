@@ -4,7 +4,7 @@ module Commands
   , Error(..)
   ) where
 
-import Core (State, Event(..), Stone, Position, track, pieceAt, turn)
+import Core (State, Event(..), Stone, Position, track, pieceAt, turn, widthAndHeight)
 
 data Command
   = Place Stone Position
@@ -12,6 +12,7 @@ data Command
 data Error
   = LocationAlreadyOccupied
   | OutOfTurn
+  | OutOfBounds
   deriving (Eq, Show)
 
 type CommandResult = Either Error (State, [Event])
@@ -31,8 +32,17 @@ guardTurn stone state =
   then pure ()
   else Left OutOfTurn
 
+guardInBoardBoundaries :: Position -> State -> Either Error ()
+guardInBoardBoundaries (x, y) state =
+  let (width, height) = widthAndHeight state
+  in
+    if 0 <= x && x < width && 0 <= y && y < height
+    then pure ()
+    else Left OutOfBounds
+
 executeEvents :: Command -> State -> Either Error [Event]
 executeEvents (Place s p) state = do
   guardNotOccupied p state
   guardTurn s state
+  guardInBoardBoundaries p state
   pure [StonePlaced s p]
