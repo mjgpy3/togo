@@ -1,6 +1,6 @@
 module Main where
 
-import Commands (execute, Command(..))
+import Commands (execute, Command(..), Error(..))
 import Core (emptyGame, turn, State, widthAndHeight, Event)
 import Effects.Tty
 import Polysemy
@@ -28,17 +28,22 @@ parseCommand state = do
       writeTty $ "Expected two numbers but got " ++ line
       parseCommand state
 
+formatError :: Error -> String
+formatError LocationAlreadyOccupied = "That position is already taken!"
+formatError OutOfTurn = "It's not your turn!"
+
+
 game :: Member Tty r => State -> [Event] -> Sem r ()
 game state events = do
-  clearTty
   writeTty (show (turn state) ++ "'s turn")
   writeTty $ render state
   command <- parseCommand state
+  clearTty
   case execute command state of
-    Left _ -> do
-      writeTty "An unexpected error occured while running command"
+    Left e -> do
+      writeTty ("Error: " ++ formatError e)
       game state events
-    Right (newState, newEvents) ->
+    Right (newState, newEvents) -> do
       game newState (newEvents ++ events)
 
 gameIO :: State -> [Event] -> Sem '[Lift IO] ()
