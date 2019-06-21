@@ -18,3 +18,9 @@ tests =
 
       it "summarizes a single event, flipping the turn" $
         turn (summarize [StonePlaced Black (1, 1)]) `shouldBe` White
+
+      it "passing changes the turn but not the board" $
+        turn (summarize [TurnPassed]) `shouldBe` White
+
+      it "a pass in response to a pass ends the game" $
+        isEndGame $ summarize [TurnPassed, TurnPassed]

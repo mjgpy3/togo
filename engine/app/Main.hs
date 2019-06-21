@@ -1,7 +1,8 @@
 module Main where
 
 import Commands (execute, Command(..), Error(..))
-import Core (emptyGame, turn, State, widthAndHeight, Event)
+import Core (emptyGame, turn, State, widthAndHeight, Event, isEndGame)
+import Data.Char (toLower)
 import Effects.Tty
 import Polysemy
 import Render (renderWithColRow)
@@ -12,11 +13,13 @@ parseCommand state = do
   line <- readTty
   let xText = takeWhile (/= ' ') line
   let yText = dropWhile (/= ' ') line
-  case (readMaybe xText, readMaybe yText) of
-    (Just x, Just y) ->
+  case (map toLower xText == "pass", readMaybe xText, readMaybe yText) of
+    (True, _, _) ->
+      pure Pass
+    (_, Just x, Just y) ->
       pure (Place (turn state) (x-1, y-1))
     _ -> do
-      writeTty $ "Expected two numbers but got " ++ line
+      writeTty $ "Expected two numbers or \"pass\" but got " ++ line
       parseCommand state
 
 formatError :: Error -> String
@@ -28,14 +31,18 @@ game :: Member Tty r => State -> [Event] -> Sem r ()
 game state events = do
   writeTty (show (turn state) ++ "'s turn")
   writeTty $ renderWithColRow state
-  command <- parseCommand state
-  clearTty
-  case execute command state of
-    Left e -> do
-      writeTty ("Error: " ++ formatError e)
-      game state events
-    Right (newState, newEvents) ->
-      game newState (newEvents ++ events)
+  if isEndGame state
+  then
+    writeTty "End of game!"
+  else do
+    command <- parseCommand state
+    clearTty
+    case execute command state of
+      Left e -> do
+        writeTty ("Error: " ++ formatError e)
+        game state events
+      Right (newState, newEvents) ->
+        game newState (newEvents ++ events)
 
 gameIO :: State -> [Event] -> Sem '[Lift IO] ()
 gameIO = (.) runTtyIo . game

@@ -8,6 +8,7 @@ import Core (State, Event(..), Stone, Position, track, pieceAt, turn, widthAndHe
 
 data Command
   = Place Stone Position
+  | Pass
 
 data Error
   = LocationAlreadyOccupied
@@ -46,3 +47,5 @@ executeEvents (Place s p) state = do
   guardTurn s state
   guardInBoardBoundaries p state
   pure [StonePlaced s p]
+executeEvents Pass state =
+  pure [TurnPassed]

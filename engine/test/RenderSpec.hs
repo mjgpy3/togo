@@ -11,6 +11,9 @@ instance Arbitrary Stone where
 instance Arbitrary GameSize where
   arbitrary = pure Standard
 
+instance Arbitrary GameState where
+  arbitrary = elements [InProgress, PassedInProgress, EndGame]
+
 tryHead :: [a] -> Maybe a
 tryHead (v:_) = Just v
 tryHead [] = Nothing
