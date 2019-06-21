@@ -4,7 +4,7 @@ import Commands (execute, Command(..), Error(..))
 import Core (emptyGame, turn, State, widthAndHeight, Event)
 import Effects.Tty
 import Polysemy
-import Render (render)
+import Render (renderWithColRow)
 import Text.Read (readMaybe)
 
 parseCommand :: Member Tty r => State -> Sem r Command
@@ -27,7 +27,7 @@ formatError OutOfBounds = "That move is not within the bounds of the board!"
 game :: Member Tty r => State -> [Event] -> Sem r ()
 game state events = do
   writeTty (show (turn state) ++ "'s turn")
-  writeTty $ render state
+  writeTty $ renderWithColRow state
   command <- parseCommand state
   clearTty
   case execute command state of
