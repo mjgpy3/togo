@@ -17,14 +17,17 @@ renderWithColRow state =
       take (3 + 2*width) "   1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9\n"
     lines = do
       y <- [0..snd (widthAndHeight state)-1]
-      (if y >= 9 then "1" else "0") ++ show ((y + 1) `mod` 10) ++ " " ++ intersperse '-' (genRow state y) ++ "\n"
+      (if y >= 9 then "1" else "0") ++ show ((y + 1) `mod` 10) ++ " " ++ padRow state y
   in
     colIndicators ++ lines
 
 render :: State -> String
 render state = do
   y <- [0..snd (widthAndHeight state)-1]
-  intersperse '-' (genRow state y) ++ "\n"
+  padRow state y
+
+padRow :: State -> Int -> String
+padRow state y = intersperse '-' (genRow state y) ++ "\n"
 
 genRow state y = do
   x <- [0..fst (widthAndHeight state)-1]
