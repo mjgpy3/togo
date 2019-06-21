@@ -6,8 +6,8 @@ import Commands
 
 tests =
   describe "Commands" $
-    describe "execute" $ do
-      it "results in a new state" $
+    describe "when placing a stone" $ do
+      it "yields a new state" $
         fst <$> execute (Place Black (5, 4)) emptyGame `shouldBe` Right (withTurn White $ gameOf [((5, 4), Black)])
 
       it "results in events" $
@@ -15,3 +15,6 @@ tests =
 
       it "flips the turn to the other player" $
         turn . fst <$> execute (Place Black (5, 4)) emptyGame `shouldBe` Right White
+
+      it "cannot be placed atop an existing stone" $
+        execute (Place White (1, 1)) (gameOf [((1, 1), Black)]) `shouldBe` Left LocationAlreadyOccupied
