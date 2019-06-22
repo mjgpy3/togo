@@ -12,12 +12,14 @@ module Core
   , State
   , widthAndHeight
   , pieceAt
+  , occupied
   , nextTurn
   , turn
   , withTurn
   ) where
 
 import qualified Data.Map.Strict as M
+import Data.Maybe (isJust)
 
 type Position = (Int, Int)
 
@@ -63,6 +65,9 @@ withTurn stone (b, s, _, gs) = (b, s, stone, gs)
 
 pieceAt :: Position -> State -> Maybe Stone
 pieceAt point state = M.lookup point (board state)
+
+occupied :: Position -> State -> Bool
+occupied point state = isJust $ pieceAt point state
 
 emptyGame :: State
 emptyGame = (M.empty, Standard, Black, InProgress)

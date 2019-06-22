@@ -4,11 +4,14 @@ import Test.Hspec
 import Core
 import Commands
 
+isOkay :: Either a b -> Bool
 isOkay (Right _) = True
 isOkay _ = False
 
+endedGame :: State
 endedGame = summarize [TurnPassed, TurnPassed]
 
+tests :: SpecWith ()
 tests =
   describe "Commands" $
     describe "when placing a stone" $ do

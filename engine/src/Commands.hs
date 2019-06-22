@@ -4,7 +4,7 @@ module Commands
   , Error(..)
   ) where
 
-import Core (State, Event(..), Stone, Position, track, pieceAt, turn, widthAndHeight, isEndGame)
+import Core (State, Event(..), Stone, Position, track, occupied, turn, widthAndHeight, isEndGame)
 
 data Command
   = Place Stone Position
@@ -28,23 +28,25 @@ execute command state =
     event <- execute' command state
     pure (track event state, event)
 
+thrownWhen :: Error -> Bool -> Either Error ()
+thrownWhen err condition =
+  if condition
+  then Left err
+  else pure ()
+
 guardNotOccupied :: Position -> State -> Either Error ()
 guardNotOccupied pos state =
-  maybe (pure ()) (const $ Left LocationAlreadyOccupied) $ pieceAt pos state
+  LocationAlreadyOccupied `thrownWhen` (occupied pos state)
 
 guardTurn :: Stone -> State -> Either Error ()
 guardTurn stone state =
-  if turn state == stone
-  then pure ()
-  else Left OutOfTurn
+  OutOfTurn `thrownWhen` (turn state /= stone)
 
 guardInBoardBoundaries :: Position -> State -> Either Error ()
 guardInBoardBoundaries (x, y) state =
   let (width, height) = widthAndHeight state
   in
-    if 0 <= x && x < width && 0 <= y && y < height
-    then pure ()
-    else Left OutOfBounds
+    OutOfBounds `thrownWhen` (not (0 <= x && x < width && 0 <= y && y < height))
 
 execute' :: Command -> State -> Either Error Event
 execute' (Place s p) state = do
