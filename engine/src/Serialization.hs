@@ -8,7 +8,7 @@ import Core (State(..), Position(..), widthAndHeight, isEndGame, Stone(..), whit
 import Data.Aeson
 
 instance ToJSON Position where
-  toJSON (Pos {x, y}) =
+  toJSON Pos{x, y} =
     object [ "x" .= x
            , "y" .= y
            ]

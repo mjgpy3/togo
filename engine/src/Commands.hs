@@ -36,7 +36,7 @@ guardTurn stone state =
   else Left OutOfTurn
 
 guardInBoardBoundaries :: Position -> State -> Either Error ()
-guardInBoardBoundaries (Pos {x, y}) state =
+guardInBoardBoundaries Pos{x, y} state =
   let (width, height) = widthAndHeight state
   in
     if 0 <= x && x < width && 0 <= y && y < height

@@ -49,7 +49,7 @@ data GameState
   deriving (Eq, Show)
 
 type Board = M.Map Position Stone
-data State =
+newtype State =
   Game (Board, GameSize, Stone, GameState)
   deriving (Eq, Show)
 
