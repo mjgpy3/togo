@@ -7,8 +7,6 @@ module Effects.Tty
   ) where
 
 import Polysemy
-import Polysemy.Input
-import Polysemy.Output
 import System.Console.ANSI (clearScreen)
 
 data Tty m a where

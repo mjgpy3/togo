@@ -24,7 +24,7 @@ dependencies:
 - containers
 - polysemy
 
-ghc-options: -O2 -flate-specialise -fspecialise-aggressively
+ghc-options: -O2 -flate-specialise -fspecialise-aggressively -Wall
 default-extensions:
   - DataKinds
   - FlexibleContexts

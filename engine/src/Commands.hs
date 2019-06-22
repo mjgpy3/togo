@@ -9,6 +9,7 @@ import Core (State, Event(..), Stone, Position, track, pieceAt, turn, widthAndHe
 data Command
   = Place Stone Position
   | Pass
+  | Resign
 
 data Error
   = LocationAlreadyOccupied
@@ -24,7 +25,7 @@ execute command state =
   if isEndGame state
   then Left GameEnded
   else do
-    event <- executeEvents command state
+    event <- execute' command state
     pure (track event state, event)
 
 guardNotOccupied :: Position -> State -> Either Error ()
@@ -45,11 +46,13 @@ guardInBoardBoundaries (x, y) state =
     then pure ()
     else Left OutOfBounds
 
-executeEvents :: Command -> State -> Either Error Event
-executeEvents (Place s p) state = do
+execute' :: Command -> State -> Either Error Event
+execute' (Place s p) state = do
   guardNotOccupied p state
   guardTurn s state
   guardInBoardBoundaries p state
   pure $ StonePlaced s p
-executeEvents Pass state =
+execute' Pass _ =
   pure TurnPassed
+execute' Resign _ =
+  pure PlayerResigned

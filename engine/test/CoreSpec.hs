@@ -3,6 +3,7 @@ module CoreSpec (tests) where
 import Test.Hspec
 import Core
 
+tests :: SpecWith ()
 tests =
   describe "Core" $ do
     describe "a standard game" $ do
@@ -24,3 +25,6 @@ tests =
 
       it "a pass in response to a pass ends the game" $
         isEndGame $ summarize [TurnPassed, TurnPassed]
+
+      it "resignation ends the game" $
+        isEndGame $ summarize [PlayerResigned]

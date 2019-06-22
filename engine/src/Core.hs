@@ -9,7 +9,7 @@ module Core
   , Event(..)
   , GameSize(..)
   , GameState(..)
-  , State(..)
+  , State
   , widthAndHeight
   , pieceAt
   , nextTurn
@@ -28,6 +28,7 @@ data GameSize = Standard deriving (Eq, Show)
 data Event
   = StonePlaced Stone Position
   | TurnPassed
+  | PlayerResigned
   deriving (Eq, Show)
 
 data GameState
@@ -73,6 +74,7 @@ track :: Event -> State -> State
 track TurnPassed (b, s, t, InProgress) = (b, s, nextTurn t, PassedInProgress)
 track TurnPassed (b, s, t, PassedInProgress) = (b, s, nextTurn t, EndGame)
 track (StonePlaced s p) (b, size, t, _) = (placeStone p s b, size, nextTurn t, InProgress)
+track PlayerResigned (b, s, t, _) = (b, s, nextTurn t, EndGame)
 track _ s@(_, _, _, EndGame) = s
 
 nextTurn :: Stone -> Stone

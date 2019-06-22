@@ -11,15 +11,15 @@ import Data.List (intersperse)
 renderWithColRow :: State -> String
 renderWithColRow state =
   let
-    (width, height) = widthAndHeight state
+    width = fst $ widthAndHeight state
     colIndicators =
       take (3 + 2*width) "   0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1\n" ++
       take (3 + 2*width) "   1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9\n"
-    lines = do
+    rawLines = do
       y <- [0..snd (widthAndHeight state)-1]
       (if y >= 9 then "1" else "0") ++ show ((y + 1) `mod` 10) ++ " " ++ padRow state y
   in
-    colIndicators ++ lines
+    colIndicators ++ rawLines
 
 render :: State -> String
 render state = do
@@ -27,14 +27,17 @@ render state = do
   padRow state y
 
 padRow :: State -> Int -> String
-padRow state y = intersperse '-' (genRow state y) ++ "\n"
+padRow state y = intersperse '-' rawRow ++ "\n"
+  where
+    rawRow = do
+      x <- [0..fst (widthAndHeight state)-1]
+      case pieceAt (x, y) state of
+         Just White -> [whitePiece]
+         Just Black -> [blackPiece]
+         _ -> "+"
 
-genRow state y = do
-  x <- [0..fst (widthAndHeight state)-1]
-  case pieceAt (x, y) state of
-     Just White -> [whitePiece]
-     Just Black -> [blackPiece]
-     _ -> "+"
-
+blackPiece :: Char
 blackPiece = '○'
+
+whitePiece :: Char
 whitePiece = '⏺'

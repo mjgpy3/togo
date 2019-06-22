@@ -13,10 +13,12 @@ parseCommand state = do
   line <- readTty
   let xText = takeWhile (/= ' ') line
   let yText = dropWhile (/= ' ') line
-  case (map toLower xText == "pass", readMaybe xText, readMaybe yText) of
-    (True, _, _) ->
+  case (map toLower xText == "pass", map toLower xText == "resign", readMaybe xText, readMaybe yText) of
+    (True, _, _, _) ->
       pure Pass
-    (_, Just x, Just y) ->
+    (_, True, _, _) ->
+      pure Resign
+    (_, _, Just x, Just y) ->
       pure (Place (turn state) (x-1, y-1))
     _ -> do
       writeTty $ "Expected two numbers or \"pass\" but got " ++ line
