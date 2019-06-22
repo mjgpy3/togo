@@ -4,7 +4,7 @@ module Commands
   , Error(..)
   ) where
 
-import Core (State, Event(..), Stone, Position, track, occupied, turn, widthAndHeight, isEndGame)
+import Core (State, Event(..), Stone, Position, occupied, turn, widthAndHeight, isEndGame)
 
 data Command
   = Place Stone Position
@@ -18,15 +18,13 @@ data Error
   | GameEnded
   deriving (Eq, Show)
 
-type CommandResult = Either Error (State, Event)
+type CommandResult = Either Error Event
 
 execute :: Command -> State -> CommandResult
 execute command state =
   if isEndGame state
   then Left GameEnded
-  else do
-    event <- execute' command state
-    pure (track event state, event)
+  else execute' command state
 
 thrownWhen :: Error -> Bool -> Either Error ()
 thrownWhen err condition =

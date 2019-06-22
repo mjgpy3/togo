@@ -17,7 +17,13 @@ tests =
       it "summarizes no events as an empty game" $
         summarize [] `shouldBe` emptyGame
 
+      it "yields a new state when a stone is placed" $
+        summarize [StonePlaced Black (5, 4)] `shouldBe` withTurn White (gameOf [((5, 4), Black)])
+
       it "summarizes a single event, flipping the turn" $
+        turn (summarize [StonePlaced Black (1, 1)]) `shouldBe` White
+
+      it "playing a stone changes the turn" $
         turn (summarize [StonePlaced Black (1, 1)]) `shouldBe` White
 
       it "passing changes the turn but not the board" $
