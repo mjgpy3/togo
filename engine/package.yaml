@@ -23,6 +23,8 @@ dependencies:
 - base >= 4.7 && < 5
 - containers
 - polysemy
+- transformers
+- aeson
 
 ghc-options: -O2 -flate-specialise -fspecialise-aggressively
 default-extensions:
@@ -42,7 +44,6 @@ library:
   source-dirs: src
   dependencies:
   - ansi-terminal
-  - aeson
 
 executables:
   engine-api:

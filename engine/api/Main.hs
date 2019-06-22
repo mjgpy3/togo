@@ -3,15 +3,19 @@ module Main where
 import Commands (execute, Command(..), Error(..))
 import Control.Monad (msum)
 import Control.Monad.IO.Class (liftIO)
-import Core (emptyGame, turn, State, widthAndHeight, Event, isEndGame, baseOnePosition)
+import Control.Monad.Trans.Class (lift)
+import Control.Monad.Trans.State.Lazy
+import qualified Core as C
 import Data.Char (toLower)
 import Effects.Tty
 import Happstack.Server (nullConf, simpleHTTP, toResponse, ok, dir, method, Method(GET))
 import Polysemy
 import Render (renderWithColRow)
 import Text.Read (readMaybe)
+import Data.Aeson
+import Serialization
 
-parseCommand :: Member Tty r => State -> Sem r Command
+parseCommand :: Member Tty r => C.State -> Sem r Command
 parseCommand state = do
   line <- readTty
   let xText = takeWhile (/= ' ') line
@@ -20,7 +24,7 @@ parseCommand state = do
     (True, _, _) ->
       pure Pass
     (_, Just x, Just y) ->
-      pure (Place (turn state) (baseOnePosition x y))
+      pure (Place (C.turn state) (C.baseOnePosition x y))
     _ -> do
       writeTty $ "Expected two numbers or \"pass\" but got " ++ line
       parseCommand state
@@ -30,11 +34,11 @@ formatError LocationAlreadyOccupied = "That position is already taken!"
 formatError OutOfTurn = "It's not your turn!"
 formatError OutOfBounds = "That move is not within the bounds of the board!"
 
-game :: Member Tty r => State -> [Event] -> Sem r ()
+game :: Member Tty r => C.State -> [C.Event] -> Sem r ()
 game state events = do
-  writeTty (show (turn state) ++ "'s turn")
+  writeTty (show (C.turn state) ++ "'s turn")
   writeTty $ renderWithColRow state
-  if isEndGame state
+  if C.isEndGame state
   then
     writeTty "End of game!"
   else do
@@ -47,12 +51,20 @@ game state events = do
       Right (newState, newEvents) ->
         game newState (newEvents ++ events)
 
-gameIO :: State -> [Event] -> Sem '[Lift IO] ()
+gameIO :: C.State -> [C.Event] -> Sem '[Lift IO] ()
 gameIO = (.) runTtyIo . game
 
-cliRun = runM $ gameIO emptyGame []
+cliRun = runM $ gameIO C.emptyGame []
+
+singleBoardGame :: StateT C.State IO ()
+singleBoardGame = do
+  state <- get
+  lift $ simpleHTTP nullConf $ dir "api" $ msum [ getBoard state
+                                                ]
+  where
+  getBoard state = do
+    method GET
+    dir "board" $ ok $ encode $ toJSON state
 
 main :: IO ()
-main = simpleHTTP nullConf $ dir "api" $ msum [ do method GET
-                                                   dir "board" $ liftIO (print "hi") >> ok "{}"
-                                              ]
+main = fst <$> runStateT singleBoardGame C.emptyGame
