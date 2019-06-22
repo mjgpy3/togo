@@ -18,6 +18,13 @@ packages:
       sha256: ea48e150478824f88e1e8fc6baa4d23ee3cc1243ab2894dded8d61c9eaaa80ce
   original:
     hackage: th-abstraction-0.3.1.0@sha256:96042f6658f2dccfac03b33f0fd59f62b1f65b9b0a765d8a2ea6026f4081ee4a,1838
+- completed:
+    hackage: guid-0.1.0@sha256:a7c975be473f6f142d5cc1b39bc807a99043d20b1bb0873fdfe7a3ce84d2faf1,1078
+    pantry-tree:
+      size: 364
+      sha256: a33838b7b1c54f6ac3e1b436b25674948713a4189658e4d82e639b9a689bc90d
+  original:
+    hackage: guid-0.1.0@sha256:a7c975be473f6f142d5cc1b39bc807a99043d20b1bb0873fdfe7a3ce84d2faf1,1078
 snapshots:
 - completed:
     size: 499461

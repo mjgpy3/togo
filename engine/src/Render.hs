@@ -5,7 +5,7 @@ module Render
   , whitePiece
   ) where
 
-import Core (widthAndHeight, State, Stone(..), pieceAt)
+import Core (widthAndHeight, State, Stone(..), pieceAt, Position(..))
 import Data.List (intersperse)
 
 renderWithColRow :: State -> String
@@ -27,11 +27,11 @@ render state = do
   padRow state y
 
 padRow :: State -> Int -> String
-padRow state y = intersperse '-' rawRow ++ "\n"
+padRow state y' = intersperse '-' rawRow ++ "\n"
   where
     rawRow = do
-      x <- [0..fst (widthAndHeight state)-1]
-      case pieceAt (x, y) state of
+      x' <- [0..fst (widthAndHeight state)-1]
+      case pieceAt (Pos {x=x', y=y'}) state of
          Just White -> [whitePiece]
          Just Black -> [blackPiece]
          _ -> "+"

@@ -1,8 +1,15 @@
 module Match
-  ( Match(..)
-  , Guid(..)
+  ( identifiedBy
+  , identifier
+  , Match
   ) where
 
-newtype Guid = Guid String
+newtype GameIdentifier = GameIdentifier String
 
-data Match = Match Guid
+data Match = Match GameIdentifier
+
+identifiedBy :: String -> Match
+identifiedBy = Match . GameIdentifier
+
+identifier :: Match -> String
+identifier (Match (GameIdentifier ident)) = ident

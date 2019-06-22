@@ -21,8 +21,8 @@ parseCommand state = do
       pure Pass
     (_, True, _, _) ->
       pure Resign
-    (_, _, Just x, Just y) ->
-      pure (Place (C.turn state) (x-1, y-1))
+    (_, _, Just x', Just y') ->
+      pure (Place (C.turn state) (C.Pos {C.x=x'-1, C.y=y'-1}))
     _ -> do
       writeTty $ "Expected two numbers or \"pass\" but got " ++ line
       parseCommand state

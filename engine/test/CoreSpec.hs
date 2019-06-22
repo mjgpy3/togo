@@ -3,6 +3,8 @@ module CoreSpec (tests) where
 import Test.Hspec
 import Core
 
+stonePlaced stone = StonePlaced stone . uncurry Pos
+
 tests :: SpecWith ()
 tests =
   describe "Core" $ do
@@ -18,13 +20,13 @@ tests =
         summarize [] `shouldBe` emptyGame
 
       it "yields a new state when a stone is placed" $
-        summarize [StonePlaced Black (5, 4)] `shouldBe` withTurn White (gameOf [((5, 4), Black)])
+        summarize [stonePlaced Black (5, 4)] `shouldBe` withTurn White (gameOf [((5, 4), Black)])
 
       it "summarizes a single event, flipping the turn" $
-        turn (summarize [StonePlaced Black (1, 1)]) `shouldBe` White
+        turn (summarize [stonePlaced Black (1, 1)]) `shouldBe` White
 
       it "playing a stone changes the turn" $
-        turn (summarize [StonePlaced Black (1, 1)]) `shouldBe` White
+        turn (summarize [stonePlaced Black (1, 1)]) `shouldBe` White
 
       it "passing changes the turn but not the board" $
         turn (summarize [TurnPassed]) `shouldBe` White

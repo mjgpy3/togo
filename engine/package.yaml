@@ -42,6 +42,9 @@ library:
   source-dirs: src
   dependencies:
   - ansi-terminal
+  - guid
+  - directory
+  - json
 
 executables:
   engine-exe:
