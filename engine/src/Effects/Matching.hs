@@ -4,11 +4,13 @@ module Effects.Matching
   (
     Matching(..)
   , runSingleMatchInState
+  , runMatchWithFileSystemStore 
   , createMatch
   , saveEvent
   , getEvents
   ) where
 
+import Control.Monad (guard, unless)
 import Core(Event(..), Stone(..), Position(..))
 import qualified Match as M
 import Polysemy
@@ -78,12 +80,14 @@ runMatchWithFileSystemStore = interpret $ \case
 
   where
     matchDir :: M.Match -> String
-    matchDir match = "/tmp/" ++ M.identifier match ++ "/"
+    matchDir match = "/tmp/togo/" ++ M.identifier match ++ "/"
 
     createMatchAndDir :: IO M.Match
     createMatchAndDir = do
       guid <- genString
       let match = M.identifiedBy guid
+      exists <- doesDirectoryExist "/tmp/togo"
+      unless exists $ createDirectory "/tmp/togo"
       createDirectory (matchDir match)
       pure $ match
 
@@ -96,7 +100,7 @@ runMatchWithFileSystemStore = interpret $ \case
     readEventsFromFiles match = do
       (fileNumbers :: [Int]) <- catMaybes <$> map readMaybe <$> listDirectory (matchDir match)
       let sorted = reverse $ sort fileNumbers
-      sortedEventText <- mapM (readFile . show) sorted
+      sortedEventText <- mapM (readFile . ((++) (matchDir match)) . show) sorted
       case traverse decode sortedEventText of
         Ok events -> pure events
         _ -> pure []

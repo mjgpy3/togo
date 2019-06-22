@@ -59,8 +59,15 @@ game = do
             saveEvent event match
             play match
 
-gameIO :: Sem '[State [C.Event], Lift IO] ()
-gameIO = runTtyIo $ runSingleMatchInState game
+singleGameInMemoryWithIo :: Sem '[State [C.Event], Lift IO] ()
+singleGameInMemoryWithIo = runTtyIo $ runSingleMatchInState game
+
+run1 = fmap snd $ runM $ runState [] $ singleGameInMemoryWithIo
+
+singleGameInFileSystem :: Sem '[Lift IO] ()
+singleGameInFileSystem = runTtyIo $ runMatchWithFileSystemStore game
+
+run2 = runM singleGameInFileSystem
 
 main :: IO ()
-main = fmap snd $ runM $ runState [] $ gameIO
+main = run2
