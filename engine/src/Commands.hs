@@ -4,7 +4,7 @@ module Commands
   , Error(..)
   ) where
 
-import Core (State, Event(..), Stone, Position, track, pieceAt, turn, widthAndHeight)
+import Core (State, Event(..), Stone, Position, track, pieceAt, turn, widthAndHeight, isEndGame)
 
 data Command
   = Place Stone Position
@@ -14,14 +14,18 @@ data Error
   = LocationAlreadyOccupied
   | OutOfTurn
   | OutOfBounds
+  | GameEnded
   deriving (Eq, Show)
 
 type CommandResult = Either Error (State, [Event])
 
 execute :: Command -> State -> CommandResult
-execute command state = do
-  events <- executeEvents command state
-  pure (foldr track state events, events)
+execute command state =
+  if isEndGame state
+  then Left GameEnded
+  else do
+    events <- executeEvents command state
+    pure (foldr track state events, events)
 
 guardNotOccupied :: Position -> State -> Either Error ()
 guardNotOccupied pos state =

@@ -7,6 +7,8 @@ import Commands
 isOkay (Right _) = True
 isOkay _ = False
 
+endedGame = summarize [TurnPassed, TurnPassed]
+
 tests =
   describe "Commands" $
     describe "when placing a stone" $ do
@@ -31,3 +33,6 @@ tests =
 
       it "placement is zero-based in index" $
         isOkay $ execute (Place Black (0, 0)) emptyGame
+
+      it "cannot be placed when the game has been ended" $ do
+        execute (Place Black (5, 6)) endedGame `shouldBe` Left GameEnded

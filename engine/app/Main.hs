@@ -26,6 +26,7 @@ formatError :: Error -> String
 formatError LocationAlreadyOccupied = "That position is already taken!"
 formatError OutOfTurn = "It's not your turn!"
 formatError OutOfBounds = "That move is not within the bounds of the board!"
+formatError GameEnded = "The game is over, no more moves can be made."
 
 game :: Member Tty r => State -> [Event] -> Sem r ()
 game state events = do
