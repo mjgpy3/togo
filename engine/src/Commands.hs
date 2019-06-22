@@ -1,10 +1,12 @@
+{-# LANGUAGE NamedFieldPuns #-}
+
 module Commands
   ( execute
   , Command(..)
   , Error(..)
   ) where
 
-import Core (State, Event(..), Stone, Position, track, pieceAt, turn, widthAndHeight)
+import Core (State, Event(..), Stone, Position(..), track, pieceAt, turn, widthAndHeight)
 
 data Command
   = Place Stone Position
@@ -34,7 +36,7 @@ guardTurn stone state =
   else Left OutOfTurn
 
 guardInBoardBoundaries :: Position -> State -> Either Error ()
-guardInBoardBoundaries (x, y) state =
+guardInBoardBoundaries (Pos {x, y}) state =
   let (width, height) = widthAndHeight state
   in
     if 0 <= x && x < width && 0 <= y && y < height

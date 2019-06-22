@@ -3,7 +3,7 @@ module Main where
 import Commands (execute, Command(..), Error(..))
 import Control.Monad (msum)
 import Control.Monad.IO.Class (liftIO)
-import Core (emptyGame, turn, State, widthAndHeight, Event, isEndGame)
+import Core (emptyGame, turn, State, widthAndHeight, Event, isEndGame, baseOnePosition)
 import Data.Char (toLower)
 import Effects.Tty
 import Happstack.Server (nullConf, simpleHTTP, toResponse, ok, dir, method, Method(GET))
@@ -20,7 +20,7 @@ parseCommand state = do
     (True, _, _) ->
       pure Pass
     (_, Just x, Just y) ->
-      pure (Place (turn state) (x-1, y-1))
+      pure (Place (turn state) (baseOnePosition x y))
     _ -> do
       writeTty $ "Expected two numbers or \"pass\" but got " ++ line
       parseCommand state

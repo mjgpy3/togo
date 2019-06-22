@@ -1,3 +1,5 @@
+{-# LANGUAGE NamedFieldPuns #-}
+
 module Render
   ( render
   , renderWithColRow
@@ -5,7 +7,7 @@ module Render
   , whitePiece
   ) where
 
-import Core (widthAndHeight, State, Stone(..), pieceAt)
+import Core (widthAndHeight, State, Stone(..), pieceAt, Position(..))
 import Data.List (intersperse)
 
 renderWithColRow :: State -> String
@@ -31,7 +33,7 @@ padRow state y = intersperse '-' (genRow state y) ++ "\n"
 
 genRow state y = do
   x <- [0..fst (widthAndHeight state)-1]
-  case pieceAt (x, y) state of
+  case pieceAt (Pos {x, y}) state of
      Just White -> [whitePiece]
      Just Black -> [blackPiece]
      _ -> "+"

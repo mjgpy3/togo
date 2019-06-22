@@ -17,7 +17,7 @@ tests =
         summarize [] `shouldBe` emptyGame
 
       it "summarizes a single event, flipping the turn" $
-        turn (summarize [StonePlaced Black (1, 1)]) `shouldBe` White
+        turn (summarize [StonePlaced Black (Pos {x=1, y=1})]) `shouldBe` White
 
       it "passing changes the turn but not the board" $
         turn (summarize [TurnPassed]) `shouldBe` White

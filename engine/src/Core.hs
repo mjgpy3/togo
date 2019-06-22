@@ -4,7 +4,8 @@ module Core
   , emptyGame
   , isEndGame
   , gameOf
-  , Position
+  , Position(..)
+  , baseOnePosition
   , Stone(..)
   , Event(..)
   , GameSize(..)
@@ -20,7 +21,15 @@ module Core
 
 import qualified Data.Map.Strict as M
 
-type Position = (Int, Int)
+data Position =
+  Pos { x :: Int, y :: Int }
+  deriving (Show, Eq, Ord)
+
+baseOnePosition :: Int -> Int -> Position
+baseOnePosition x' y' = Pos { x=x'-1, y=y'-1 }
+
+baseZeroPosition :: Int -> Int -> Position
+baseZeroPosition x' y' = Pos { x=x', y=y' }
 
 data Stone = Black | White deriving (Eq, Show)
 
@@ -52,7 +61,7 @@ gameSize (Game (_, s, _, _)) = s
 board :: State -> Board
 board (Game (b, _, _, _)) = b
 
-widthAndHeight :: State -> Position
+widthAndHeight :: State -> (Int, Int)
 widthAndHeight state =
   case gameSize state of
     Standard -> (19, 19)
@@ -69,8 +78,10 @@ pieceAt point state = M.lookup point (board state)
 emptyGame :: State
 emptyGame = Game (M.empty, Standard, Black, InProgress)
 
-gameOf :: [(Position, Stone)] -> State
-gameOf vs = Game (M.fromList vs, Standard, Black, InProgress)
+mapFst f (x, y) = (f x, y)
+
+gameOf :: [((Int, Int), Stone)] -> State
+gameOf vs = Game (M.fromList $ map (mapFst (uncurry baseZeroPosition)) vs, Standard, Black, InProgress)
 
 track :: Event -> State -> State
 track TurnPassed (Game (b, s, t, InProgress)) = Game (b, s, nextTurn t, PassedInProgress)

@@ -17,6 +17,9 @@ instance Arbitrary GameState where
 instance Arbitrary State where
   arbitrary = Game <$> arbitrary
 
+instance Arbitrary Position where
+  arbitrary = Pos <$> arbitrary <*> arbitrary
+
 tryHead :: [a] -> Maybe a
 tryHead (v:_) = Just v
 tryHead [] = Nothing

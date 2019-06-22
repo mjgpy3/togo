@@ -7,7 +7,9 @@ import Data.Aeson
 
 instance ToJSON State where
  toJSON (Game (board, size, stone, state)) =
-    object [{- "firstName"  .= firstName
+    object [
+
+           {- "firstName"  .= firstName
            , "lastName"   .= lastName
            , "age"        .= age
            , "likesPizza" .= likesPizza-}
