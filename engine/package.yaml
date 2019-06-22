@@ -44,9 +44,9 @@ library:
   - ansi-terminal
 
 executables:
-  engine-exe:
+  engine-api:
     main:                Main.hs
-    source-dirs:         app
+    source-dirs:         api
     ghc-options:
     - -threaded
     - -rtsopts
@@ -54,6 +54,7 @@ executables:
     dependencies:
     - engine
     - containers
+    - happstack-server
 
 tests:
   engine-test:

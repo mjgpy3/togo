@@ -1,9 +1,11 @@
 module Main where
 
 import Commands (execute, Command(..), Error(..))
+import Control.Monad (msum)
 import Core (emptyGame, turn, State, widthAndHeight, Event, isEndGame)
 import Data.Char (toLower)
 import Effects.Tty
+import Happstack.Server (nullConf, simpleHTTP, toResponse, ok, dir)
 import Polysemy
 import Render (renderWithColRow)
 import Text.Read (readMaybe)
@@ -47,5 +49,8 @@ game state events = do
 gameIO :: State -> [Event] -> Sem '[Lift IO] ()
 gameIO = (.) runTtyIo . game
 
+cliRun = runM $ gameIO emptyGame []
+
 main :: IO ()
-main = runM $ gameIO emptyGame []
+main = simpleHTTP nullConf $ msum [ dir "board" $ ok "{}"
+                                  ]

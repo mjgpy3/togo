@@ -37,6 +37,7 @@ packages:
 extra-deps:
  - polysemy-0.4.0.0@sha256:6dfd2070c9f1f8e64ba9fbeee2af59e2893cac8acb066c2c80cf6428e2ddcef9,4004
  - th-abstraction-0.3.1.0@sha256:96042f6658f2dccfac03b33f0fd59f62b1f65b9b0a765d8a2ea6026f4081ee4a,1838
+ - happstack-server-7.5.1.3@sha256:5cfaffa15fe97262d3856196add3e1f92a236e2c5e0afa5ec21ed36887513996,6449
 
 # - acme-missiles-0.3
 # - git: https://github.com/commercialhaskell/stack.git
