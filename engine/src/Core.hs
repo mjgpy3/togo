@@ -17,6 +17,8 @@ module Core
   , nextTurn
   , turn
   , withTurn
+  , whiteStoneLocations
+  , blackStoneLocations
   ) where
 
 import qualified Data.Map.Strict as M
@@ -50,6 +52,16 @@ type Board = M.Map Position Stone
 data State =
   Game (Board, GameSize, Stone, GameState)
   deriving (Eq, Show)
+
+
+locationsOfStones :: Stone -> State -> [Position]
+locationsOfStones s (Game (board, _, _, _)) = map fst $ filter ((== s) . snd) $ M.toList board
+
+whiteStoneLocations :: State -> [Position]
+whiteStoneLocations = locationsOfStones White
+
+blackStoneLocations :: State -> [Position]
+blackStoneLocations = locationsOfStones Black
 
 isEndGame :: State -> Bool
 isEndGame (Game (_, _, _, EndGame)) = True
