@@ -14,6 +14,9 @@ instance Arbitrary GameSize where
 instance Arbitrary GameState where
   arbitrary = elements [InProgress, PassedInProgress, EndGame]
 
+instance Arbitrary State where
+  arbitrary = Game <$> arbitrary
+
 tryHead :: [a] -> Maybe a
 tryHead (v:_) = Just v
 tryHead [] = Nothing

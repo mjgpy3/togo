@@ -25,6 +25,13 @@ packages:
       sha256: 819ad7fdcf9e97efd54c4046731b428b2a3154ffad23f221ec9a54c436870218
   original:
     hackage: happstack-server-7.5.1.3@sha256:5cfaffa15fe97262d3856196add3e1f92a236e2c5e0afa5ec21ed36887513996,6449
+- completed:
+    hackage: aeson-1.0.2.1@sha256:8448fa3aca09e02dc321ccd09ccf3ec3fab74109f170269552ba599fb054864d,5663
+    pantry-tree:
+      size: 5948
+      sha256: 383f5305459693d8998433992200952349bec6efdb489736e19ab4451e644d69
+  original:
+    hackage: aeson-1.0.2.1@sha256:8448fa3aca09e02dc321ccd09ccf3ec3fab74109f170269552ba599fb054864d,5663
 snapshots:
 - completed:
     size: 499461

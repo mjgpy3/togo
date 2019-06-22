@@ -42,6 +42,7 @@ library:
   source-dirs: src
   dependencies:
   - ansi-terminal
+  - aeson
 
 executables:
   engine-api:

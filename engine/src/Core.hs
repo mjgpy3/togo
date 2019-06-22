@@ -10,6 +10,7 @@ module Core
   , GameSize(..)
   , GameState(..)
   , State(..)
+  , Board(..)
   , widthAndHeight
   , pieceAt
   , nextTurn
@@ -37,17 +38,19 @@ data GameState
   deriving (Eq, Show)
 
 type Board = M.Map Position Stone
-type State = (Board, GameSize, Stone, GameState)
+data State =
+  Game (Board, GameSize, Stone, GameState)
+  deriving (Eq, Show)
 
 isEndGame :: State -> Bool
-isEndGame (_, _, _, EndGame) = True
+isEndGame (Game (_, _, _, EndGame)) = True
 isEndGame _ = False
 
 gameSize :: State -> GameSize
-gameSize (_, s, _, _) = s
+gameSize (Game (_, s, _, _)) = s
 
 board :: State -> Board
-board (b, _, _, _) = b
+board (Game (b, _, _, _)) = b
 
 widthAndHeight :: State -> Position
 widthAndHeight state =
@@ -55,25 +58,25 @@ widthAndHeight state =
     Standard -> (19, 19)
 
 turn :: State -> Stone
-turn (_, _, t, _) = t
+turn (Game (_, _, t, _)) = t
 
 withTurn :: Stone -> State -> State
-withTurn stone (b, s, _, gs) = (b, s, stone, gs)
+withTurn stone (Game (b, s, _, gs)) = Game (b, s, stone, gs)
 
 pieceAt :: Position -> State -> Maybe Stone
 pieceAt point state = M.lookup point (board state)
 
 emptyGame :: State
-emptyGame = (M.empty, Standard, Black, InProgress)
+emptyGame = Game (M.empty, Standard, Black, InProgress)
 
 gameOf :: [(Position, Stone)] -> State
-gameOf vs = (M.fromList vs, Standard, Black, InProgress)
+gameOf vs = Game (M.fromList vs, Standard, Black, InProgress)
 
 track :: Event -> State -> State
-track TurnPassed (b, s, t, InProgress) = (b, s, nextTurn t, PassedInProgress)
-track TurnPassed (b, s, t, PassedInProgress) = (b, s, nextTurn t, EndGame)
-track (StonePlaced s p) (b, size, t, _) = (placeStone p s b, size, nextTurn t, InProgress)
-track _ s@(_, _, _, EndGame) = s
+track TurnPassed (Game (b, s, t, InProgress)) = Game (b, s, nextTurn t, PassedInProgress)
+track TurnPassed (Game (b, s, t, PassedInProgress)) = Game (b, s, nextTurn t, EndGame)
+track (StonePlaced s p) (Game (b, size, t, _)) = Game (placeStone p s b, size, nextTurn t, InProgress)
+track _ s@(Game (_, _, _, EndGame)) = s
 
 nextTurn :: Stone -> Stone
 nextTurn Black = White
