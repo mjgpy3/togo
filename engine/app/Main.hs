@@ -42,8 +42,8 @@ game state events = do
       Left e -> do
         writeTty ("Error: " ++ formatError e)
         game state events
-      Right (newState, newEvents) ->
-        game newState (newEvents ++ events)
+      Right (newState, event) ->
+        game newState (event:events)
 
 gameIO :: State -> [Event] -> Sem '[Lift IO] ()
 gameIO = (.) runTtyIo . game

@@ -17,15 +17,15 @@ data Error
   | GameEnded
   deriving (Eq, Show)
 
-type CommandResult = Either Error (State, [Event])
+type CommandResult = Either Error (State, Event)
 
 execute :: Command -> State -> CommandResult
 execute command state =
   if isEndGame state
   then Left GameEnded
   else do
-    events <- executeEvents command state
-    pure (foldr track state events, events)
+    event <- executeEvents command state
+    pure (track event state, event)
 
 guardNotOccupied :: Position -> State -> Either Error ()
 guardNotOccupied pos state =
@@ -45,11 +45,11 @@ guardInBoardBoundaries (x, y) state =
     then pure ()
     else Left OutOfBounds
 
-executeEvents :: Command -> State -> Either Error [Event]
+executeEvents :: Command -> State -> Either Error Event
 executeEvents (Place s p) state = do
   guardNotOccupied p state
   guardTurn s state
   guardInBoardBoundaries p state
-  pure [StonePlaced s p]
+  pure $ StonePlaced s p
 executeEvents Pass state =
-  pure [TurnPassed]
+  pure TurnPassed

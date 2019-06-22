@@ -16,7 +16,7 @@ tests =
         fst <$> execute (Place Black (5, 4)) emptyGame `shouldBe` Right (withTurn White $ gameOf [((5, 4), Black)])
 
       it "results in events" $
-        snd <$> execute (Place Black (5, 4)) emptyGame `shouldBe` Right [StonePlaced Black (5, 4)]
+        snd <$> execute (Place Black (5, 4)) emptyGame `shouldBe` Right (StonePlaced Black (5, 4))
 
       it "flips the turn to the other player" $
         turn . fst <$> execute (Place Black (5, 4)) emptyGame `shouldBe` Right White
@@ -34,5 +34,5 @@ tests =
       it "placement is zero-based in index" $
         isOkay $ execute (Place Black (0, 0)) emptyGame
 
-      it "cannot be placed when the game has been ended" $ do
+      it "cannot be placed when the game has been ended" $
         execute (Place Black (5, 6)) endedGame `shouldBe` Left GameEnded
