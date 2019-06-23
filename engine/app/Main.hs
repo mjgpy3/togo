@@ -24,7 +24,7 @@ parseCommand state = do
     (_, _, Just x', Just y') ->
       pure (Place (C.turn state) (C.Pos {C.x=x'-1, C.y=y'-1}))
     _ -> do
-      writeTty $ "Expected two numbers or \"pass\" but got " ++ line
+      writeTty $ "Expected two numbers, \"pass\" or \"resign\" but got " ++ line
       parseCommand state
 
 formatError :: Error -> String
@@ -62,12 +62,14 @@ game = do
 singleGameInMemoryWithIo :: Sem '[State [C.Event], Lift IO] ()
 singleGameInMemoryWithIo = runTtyIo $ runSingleMatchInState game
 
-run1 = fmap snd $ runM $ runState [] $ singleGameInMemoryWithIo
+runSingleGameInMemory :: IO ()
+runSingleGameInMemory = fmap snd $ runM $ runState [] $ singleGameInMemoryWithIo
 
 singleGameInFileSystem :: Sem '[Lift IO] ()
 singleGameInFileSystem = runTtyIo $ runMatchWithFileSystemStore game
 
-run2 = runM singleGameInFileSystem
+runSingleGameInFileSystem :: IO ()
+runSingleGameInFileSystem = runM singleGameInFileSystem
 
 main :: IO ()
-main = run2
+main = runSingleGameInFileSystem

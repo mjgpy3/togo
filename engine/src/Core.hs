@@ -74,7 +74,8 @@ occupied point state = isJust $ pieceAt point state
 emptyGame :: State
 emptyGame = (M.empty, Standard, Black, InProgress)
 
-mapFst f (x, y) = (f x, y)
+mapFst :: (a -> b) -> (a, c) -> (b, c)
+mapFst f (x', y') = (f x', y')
 
 gameOf :: [((Int, Int), Stone)] -> State
 gameOf vs = (M.fromList (map (mapFst (uncurry Pos)) vs), Standard, Black, InProgress)

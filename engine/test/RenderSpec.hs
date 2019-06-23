@@ -21,6 +21,7 @@ tryHead :: [a] -> Maybe a
 tryHead (v:_) = Just v
 tryHead [] = Nothing
 
+tests :: SpecWith ()
 tests =
   describe "Render" $
     describe "render" $ do

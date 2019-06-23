@@ -10,7 +10,7 @@ module Effects.Matching
   , getEvents
   ) where
 
-import Control.Monad (guard, unless)
+import Control.Monad (unless)
 import Core(Event(..), Stone(..), Position(..))
 import qualified Match as M
 import Polysemy
@@ -34,12 +34,7 @@ runSingleMatchInState = interpret $ \case
   SaveEvent event _ -> modify ((:) event)
   GetEvents _ -> get
 
-{-
-  = StonePlaced Stone Position
-  | TurnPassed
-  | PlayerResigned
- - -}
-
+parseStone' :: String -> Result Stone
 parseStone' "Black" = Ok Black
 parseStone' "White" = Ok White
 parseStone' _ = Error "Unrecognized stone"
