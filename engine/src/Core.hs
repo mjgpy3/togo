@@ -22,7 +22,8 @@ module Core
   ) where
 
 import qualified Data.Map.Strict as M
-import Data.Maybe (isJust, mapMaybe)
+import qualified Data.Set as S
+import Data.Maybe (isJust, isNothing, mapMaybe)
 
 data Position =
   Pos { x :: Int, y :: Int }
@@ -71,27 +72,43 @@ withTurn stone (b, s, _, gs) = (b, s, stone, gs)
 pieceAt :: Position -> State -> Maybe Stone
 pieceAt point state = M.lookup point (board state)
 
-liberties :: Stone -> Position -> State -> Int
-liberties _ pos@Pos{x, y} state = possibleLiberties
+liberties :: Stone -> Position -> State -> S.Set Position
+liberties stone p = go (S.singleton p) [] p
   where
-    possibleLiberties :: Int
-    possibleLiberties = length neighboringPositions - length occupiedNeighbors
+    go :: S.Set Position -> [Position] -> Position -> State -> S.Set Position
+    go visited toVisit pos@Pos{x, y} state = S.union unoccupiedNeighbors alliedNeighborsLiberties
+      where
+        alliedNeighborsLiberties :: S.Set Position
+        alliedNeighborsLiberties =
+          case nextToVisit of
+            [] -> S.empty
+            (nextPos:remainingToVist) -> go nextVisited remainingToVist nextPos (track (StonePlaced stone pos) state)
 
-    occupiedNeighbors :: [(Position, Stone)]
-    occupiedNeighbors = do
-      neighbor <- neighboringPositions
-      case pieceAt neighbor state of
-        Just stone -> [(neighbor, stone)]
-        _ -> []
+        nextToVisit :: [Position]
+        nextToVisit = filter (not . (`S.member` nextVisited)) $ (++) toVisit $ map fst $ filter ((==) stone . snd) $ occupiedNeighbors
 
-    neighboringPositions :: [Position]
-    neighboringPositions = filter withinBoard $ uncurry Pos <$> [(x-1, y), (x+1, y), (x, y-1), (x, y+1)]
+        nextVisited :: S.Set Position
+        nextVisited = S.insert pos visited
 
-    withinBoard :: Position -> Bool
-    withinBoard Pos{x, y} = withinBounds x && withinBounds y
+        unoccupiedNeighbors :: S.Set Position
+        unoccupiedNeighbors =
+          S.fromList $ filter (isNothing . (`pieceAt` state)) $ neighboringPositions
 
-    withinBounds :: Int -> Bool
-    withinBounds dim = 0 <= dim && dim < size state
+        occupiedNeighbors :: [(Position, Stone)]
+        occupiedNeighbors = do
+          neighbor <- neighboringPositions
+          case pieceAt neighbor state of
+            Just stone -> [(neighbor, stone)]
+            _ -> []
+
+        neighboringPositions :: [Position]
+        neighboringPositions = filter withinBoard $ uncurry Pos <$> [(x-1, y), (x+1, y), (x, y-1), (x, y+1)]
+
+        withinBoard :: Position -> Bool
+        withinBoard Pos{x=x', y=y'} = withinBounds x' && withinBounds y'
+
+        withinBounds :: Int -> Bool
+        withinBounds dim = 0 <= dim && dim < size state
 
 occupied :: Position -> State -> Bool
 occupied point state = isJust $ pieceAt point state

@@ -3,8 +3,11 @@ module CoreSpec (tests) where
 import Core
 import Data.Foldable (for_)
 import Test.Hspec
+import qualified Data.Set as S
 
 stonePlaced stone = StonePlaced stone . uncurry Pos
+
+atPlaces stone positions = gameOf $ map (\pos -> (pos, stone)) positions
 
 tests :: SpecWith ()
 tests =
@@ -41,15 +44,30 @@ tests =
     describe "liberties" $ do
       describe "a stone in the middle of the board, all alone" $
         it "has 4 liberties" $
-          liberties Black (Pos 5 5) emptyGame `shouldBe` 4
+          S.size (liberties Black (Pos 5 5) emptyGame) `shouldBe` 4
 
       describe "a stone in the corner" $
         it "has 2 liberties" $
           for_ [(0, 0), (18, 18), (0, 18), (18, 0)] $ \(x', y') ->
-            liberties Black (Pos x' y') emptyGame `shouldBe` 2
+            S.size (liberties Black (Pos x' y') emptyGame) `shouldBe` 2
 
       describe "a stone placed next to a stone of the opposing color" $
         it "loses a liberty" $
           for_ [(Black, White), (White, Black)] $ \(toPlace, enemy) ->
             for_ [(5, 6), (6, 5), (5, 4), (4, 5)] $ \(x', y') ->
-              liberties toPlace (Pos x' y') (gameOf [((5, 5), enemy)]) `shouldBe` 3
+              S.size (liberties toPlace (Pos x' y') (gameOf [((5, 5), enemy)])) `shouldBe` 3
+
+      describe "a stone placed next to a stone of the same color" $
+        it "loses a liberty but gains its neighbors liberties" $
+          for_ [Black, White] $ \toPlace ->
+            for_ [(5, 6), (6, 5), (5, 4), (4, 5)] $ \(x', y') ->
+              S.size (liberties toPlace (Pos x' y') (gameOf [((5, 5), toPlace)])) `shouldBe` 6
+
+      describe "a few more complicated placements" $ do
+        describe "more than two stones together" $
+          it "tracks all liberties without double counting" $
+            S.size (liberties Black (Pos 5 5) (Black `atPlaces` [(4, 5), (5, 5), (6, 5)])) `shouldBe` 8
+
+        describe "a stone in the middle of a diamond" $
+          it "tracks all liberties without double counting" $
+            S.size (liberties Black (Pos 5 5) (Black `atPlaces` [(5, 4), (4, 5), (5, 5), (6, 5), (5, 6)])) `shouldBe` 8
