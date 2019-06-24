@@ -11,7 +11,7 @@ tests =
   describe "Core" $ do
     describe "a standard game" $ do
       it "is 19x19" $
-        widthAndHeight emptyGame `shouldBe` (19, 19)
+        size emptyGame `shouldBe` 19
 
       it "starts with black" $
         turn emptyGame `shouldBe` Black

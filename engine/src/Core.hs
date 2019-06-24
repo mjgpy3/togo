@@ -12,7 +12,7 @@ module Core
   , GameSize(..)
   , GameState(..)
   , State
-  , widthAndHeight
+  , size
   , pieceAt
   , liberties
   , occupied
@@ -57,10 +57,10 @@ gameSize (_, s, _, _) = s
 board :: State -> Board
 board (b, _, _, _) = b
 
-widthAndHeight :: State -> (Int, Int)
-widthAndHeight state =
+size :: State -> Int
+size state =
   case gameSize state of
-    Standard -> (19, 19)
+    Standard -> 19
 
 turn :: State -> Stone
 turn (_, _, t, _) = t
@@ -84,14 +84,12 @@ liberties _ pos st = possibleLiberties
 
     classify :: Position -> PositionClassification
     classify Pos{x, y} =
-      let (width, height) = widthAndHeight st
-      in
-        case (x == 0, y == 0, x == width-1, y == height-1) of
-          (True, True, _, _) -> Corner
-          (_, _, True, True) -> Corner
-          (True, _, _, True) -> Corner
-          (_, True, True, _) -> Corner
-          _ -> NonCorner
+      case (x == 0, y == 0, x == size st-1, y == size st-1) of
+        (True, True, _, _) -> Corner
+        (_, _, True, True) -> Corner
+        (True, _, _, True) -> Corner
+        (_, True, True, _) -> Corner
+        _ -> NonCorner
 
 occupied :: Position -> State -> Bool
 occupied point state = isJust $ pieceAt point state
@@ -108,7 +106,7 @@ gameOf vs = (M.fromList (map (mapFst (uncurry Pos)) vs), Standard, Black, InProg
 track :: Event -> State -> State
 track TurnPassed (b, s, t, InProgress) = (b, s, nextTurn t, PassedInProgress)
 track TurnPassed (b, s, t, PassedInProgress) = (b, s, nextTurn t, EndGame)
-track (StonePlaced s p) (b, size, t, _) = (placeStone p s b, size, nextTurn t, InProgress)
+track (StonePlaced s p) (b, sze, t, _) = (placeStone p s b, sze, nextTurn t, InProgress)
 track PlayerResigned (b, s, t, _) = (b, s, nextTurn t, EndGame)
 track _ s@(_, _, _, EndGame) = s
 

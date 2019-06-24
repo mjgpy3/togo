@@ -6,7 +6,7 @@ module Commands
   , Error(..)
   ) where
 
-import Core (State, Event(..), Stone, Position(..), occupied, turn, widthAndHeight, isEndGame)
+import Core (State, Event(..), Stone, Position(..), occupied, turn, size, isEndGame)
 
 data Command
   = Place Stone Position
@@ -44,9 +44,7 @@ guardTurn stone state =
 
 guardInBoardBoundaries :: Position -> State -> Either Error ()
 guardInBoardBoundaries Pos{x, y} state =
-  let (width, height) = widthAndHeight state
-  in
-    OutOfBounds `thrownWhen` (not (0 <= x && x < width && 0 <= y && y < height))
+  OutOfBounds `thrownWhen` (not (0 <= x && x < size state && 0 <= y && y < size state))
 
 execute' :: Command -> State -> Either Error Event
 execute' (Place s p) state = do
