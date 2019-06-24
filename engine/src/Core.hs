@@ -15,6 +15,7 @@ module Core
   , size
   , pieceAt
   , liberties
+  , wouldNotHaveLiberties
   , occupied
   , nextTurn
   , turn
@@ -71,6 +72,9 @@ withTurn stone (b, s, _, gs) = (b, s, stone, gs)
 
 pieceAt :: Position -> State -> Maybe Stone
 pieceAt point state = M.lookup point (board state)
+
+wouldNotHaveLiberties :: Position -> State -> Bool
+wouldNotHaveLiberties p state = (== 0) $ length $ liberties (turn state) p state
 
 liberties :: Stone -> Position -> State -> S.Set Position
 liberties stone p = go (S.singleton p) [] p

@@ -13,6 +13,8 @@ endedGame = summarize [TurnPassed, TurnPassed]
 
 place stone = Place stone . uncurry Pos
 
+atPlaces stone positions = gameOf $ map (\pos -> (pos, stone)) positions
+
 tests :: SpecWith ()
 tests =
   describe "Commands" $
@@ -35,3 +37,6 @@ tests =
 
       it "cannot be placed when the game has been ended" $
         execute (place Black (5, 6)) endedGame `shouldBe` Left GameEnded
+
+      it "cannot be placed if it would have no liberties (obvious)" $
+        execute (place Black (0, 0)) (White `atPlaces` [(0, 1), (1, 0)]) `shouldBe` Left PlacementHasNoLiberties
