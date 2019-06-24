@@ -47,3 +47,9 @@ tests =
         it "has 2 liberties" $
           for_ [(0, 0), (18, 18), (0, 18), (18, 0)] $ \(x', y') ->
             liberties Black (Pos x' y') emptyGame `shouldBe` 2
+
+      describe "a stone placed next to a stone of the opposing color" $
+        it "loses a liberty" $
+          for_ [(Black, White), (White, Black)] $ \(toPlace, enemy) ->
+            for_ [(5, 6), (6, 5), (5, 4), (4, 5)] $ \(x', y') ->
+              liberties toPlace (Pos x' y') (gameOf [((5, 5), enemy)]) `shouldBe` 3

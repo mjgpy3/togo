@@ -22,7 +22,7 @@ module Core
   ) where
 
 import qualified Data.Map.Strict as M
-import Data.Maybe (isJust)
+import Data.Maybe (isJust, mapMaybe)
 
 data Position =
   Pos { x :: Int, y :: Int }
@@ -71,25 +71,27 @@ withTurn stone (b, s, _, gs) = (b, s, stone, gs)
 pieceAt :: Position -> State -> Maybe Stone
 pieceAt point state = M.lookup point (board state)
 
-data PositionClassification = Corner | NonCorner
-
 liberties :: Stone -> Position -> State -> Int
-liberties _ pos st = possibleLiberties
+liberties _ pos@Pos{x, y} state = possibleLiberties
   where
     possibleLiberties :: Int
-    possibleLiberties =
-      case classify pos of
-        Corner -> 2
-        NonCorner -> 4
+    possibleLiberties = length neighboringPositions - length occupiedNeighbors
 
-    classify :: Position -> PositionClassification
-    classify Pos{x, y} =
-      case (x == 0, y == 0, x == size st-1, y == size st-1) of
-        (True, True, _, _) -> Corner
-        (_, _, True, True) -> Corner
-        (True, _, _, True) -> Corner
-        (_, True, True, _) -> Corner
-        _ -> NonCorner
+    occupiedNeighbors :: [(Position, Stone)]
+    occupiedNeighbors = do
+      neighbor <- neighboringPositions
+      case pieceAt neighbor state of
+        Just stone -> [(neighbor, stone)]
+        _ -> []
+
+    neighboringPositions :: [Position]
+    neighboringPositions = filter withinBoard $ uncurry Pos <$> [(x-1, y), (x+1, y), (x, y-1), (x, y+1)]
+
+    withinBoard :: Position -> Bool
+    withinBoard Pos{x, y} = withinBounds x && withinBounds y
+
+    withinBounds :: Int -> Bool
+    withinBounds dim = 0 <= dim && dim < size state
 
 occupied :: Position -> State -> Bool
 occupied point state = isJust $ pieceAt point state
