@@ -1,3 +1,5 @@
+{-# LANGUAGE NamedFieldPuns #-}
+
 module Core
   ( summarize
   , track
@@ -12,6 +14,7 @@ module Core
   , State
   , widthAndHeight
   , pieceAt
+  , liberties
   , occupied
   , nextTurn
   , turn
@@ -67,6 +70,28 @@ withTurn stone (b, s, _, gs) = (b, s, stone, gs)
 
 pieceAt :: Position -> State -> Maybe Stone
 pieceAt point state = M.lookup point (board state)
+
+data PositionClassification = Corner | NonCorner
+
+liberties :: Stone -> Position -> State -> Int
+liberties _ pos st = possibleLiberties
+  where
+    possibleLiberties :: Int
+    possibleLiberties =
+      case classify pos of
+        Corner -> 2
+        NonCorner -> 4
+
+    classify :: Position -> PositionClassification
+    classify Pos{x, y} =
+      let (width, height) = widthAndHeight st
+      in
+        case (x == 0, y == 0, x == width-1, y == height-1) of
+          (True, True, _, _) -> Corner
+          (_, _, True, True) -> Corner
+          (True, _, _, True) -> Corner
+          (_, True, True, _) -> Corner
+          _ -> NonCorner
 
 occupied :: Position -> State -> Bool
 occupied point state = isJust $ pieceAt point state

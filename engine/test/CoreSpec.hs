@@ -1,7 +1,8 @@
 module CoreSpec (tests) where
 
-import Test.Hspec
 import Core
+import Data.Foldable (for_)
+import Test.Hspec
 
 stonePlaced stone = StonePlaced stone . uncurry Pos
 
@@ -36,3 +37,13 @@ tests =
 
       it "resignation ends the game" $
         isEndGame $ summarize [PlayerResigned]
+
+    describe "liberties" $ do
+      describe "a stone in the middle of the board, all alone" $
+        it "has 4 liberties" $
+          liberties Black (Pos 5 5) emptyGame `shouldBe` 4
+
+      describe "a stone in the corner" $
+        it "has 2 liberties" $
+          for_ [(0, 0), (18, 18), (0, 18), (18, 0)] $ \(x', y') ->
+            liberties Black (Pos x' y') emptyGame `shouldBe` 2
