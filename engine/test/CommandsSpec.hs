@@ -40,3 +40,12 @@ tests =
 
       it "cannot be placed if it would have no liberties (obvious)" $
         execute (place Black (0, 0)) (White `atPlaces` [(0, 1), (1, 0)]) `shouldBe` Left PlacementHasNoLiberties
+
+      it "cannot be placed if it would have no liberties (slightly less obvious)" $ do
+        let game = gameOf [ ((0, 0), Black)
+                          , ((2, 0), White)
+                          , ((0, 1), White)
+                          , ((1, 1), White)
+                          , ((2, 1), Black)
+                          ]
+        execute (place Black (1, 0)) game `shouldBe` Left PlacementHasNoLiberties
