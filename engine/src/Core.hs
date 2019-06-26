@@ -13,7 +13,9 @@ module Core
   , GameState(..)
   , State
   , size
-  , pieceAt
+  , stoneAt
+  , stonesCapturedBy
+  , collectCaptures
   , liberties
   , wouldNotHaveLiberties
   , occupied
@@ -24,7 +26,7 @@ module Core
 
 import qualified Data.Map.Strict as M
 import qualified Data.Set as S
-import Data.Maybe (isJust, isNothing, mapMaybe)
+import Data.Maybe (isJust, isNothing)
 
 data Position =
   Pos { x :: Int, y :: Int }
@@ -70,11 +72,20 @@ turn (_, _, t, _) = t
 withTurn :: Stone -> State -> State
 withTurn stone (b, s, _, gs) = (b, s, stone, gs)
 
-pieceAt :: Position -> State -> Maybe Stone
-pieceAt point state = M.lookup point (board state)
+stoneAt :: Position -> State -> Maybe Stone
+stoneAt point state = M.lookup point (board state)
+
+stonesCapturedBy :: Stone -> State -> Int
+stonesCapturedBy _ _ = 0
+
+collectCaptures :: State -> State
+collectCaptures state@(stones, s, t, st) = (M.filterWithKey (hasLiberties state) stones, s, t, st)
 
 wouldNotHaveLiberties :: Position -> State -> Bool
-wouldNotHaveLiberties p state = (== 0) $ length $ liberties (turn state) p state
+wouldNotHaveLiberties p state = not $ hasLiberties state p (turn state)
+
+hasLiberties :: State -> Position -> Stone -> Bool
+hasLiberties state p s = not $ S.null $ liberties s p state
 
 liberties :: Stone -> Position -> State -> S.Set Position
 liberties stone p = go (S.singleton p) [] p
@@ -96,13 +107,13 @@ liberties stone p = go (S.singleton p) [] p
 
         unoccupiedNeighbors :: S.Set Position
         unoccupiedNeighbors =
-          S.fromList $ filter (isNothing . (`pieceAt` state)) $ neighboringPositions
+          S.fromList $ filter (isNothing . (`stoneAt` state)) $ neighboringPositions
 
         occupiedNeighbors :: [(Position, Stone)]
         occupiedNeighbors = do
           neighbor <- neighboringPositions
-          case pieceAt neighbor state of
-            Just stone -> [(neighbor, stone)]
+          case stoneAt neighbor state of
+            Just st -> [(neighbor, st)]
             _ -> []
 
         neighboringPositions :: [Position]
@@ -115,7 +126,7 @@ liberties stone p = go (S.singleton p) [] p
         withinBounds dim = 0 <= dim && dim < size state
 
 occupied :: Position -> State -> Bool
-occupied point state = isJust $ pieceAt point state
+occupied point state = isJust $ stoneAt point state
 
 emptyGame :: State
 emptyGame = (M.empty, Standard, Black, InProgress)

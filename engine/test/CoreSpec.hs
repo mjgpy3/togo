@@ -19,6 +19,10 @@ tests =
       it "starts with black" $
         turn emptyGame `shouldBe` Black
 
+      it "has no captures" $ do
+        stonesCapturedBy Black emptyGame `shouldBe` 0
+        stonesCapturedBy White emptyGame `shouldBe` 0
+
     describe "summarize" $ do
       it "summarizes no events as an empty game" $
         summarize [] `shouldBe` emptyGame
@@ -71,3 +75,19 @@ tests =
         describe "a stone in the middle of a diamond" $
           it "tracks all liberties without double counting" $
             S.size (liberties Black (Pos 5 5) (Black `atPlaces` [(5, 4), (4, 5), (5, 5), (6, 5), (5, 6)])) `shouldBe` 8
+
+    describe "collectCaptures" $ do
+      describe "given an empty game" $
+        it "makes no change" $
+          collectCaptures emptyGame `shouldBe` emptyGame
+
+      describe "given a board with a simple capture" $ do
+        let stateAfterCaptures = collectCaptures $ gameOf [ ((0, 1), White)
+                                                          , ((1, 0), White)
+                                                          , ((2, 1), White)
+                                                          , ((1, 2), White)
+                                                          , ((1, 1), Black)
+                                                          ]
+
+        it "removes the stone that was captured" $
+          stoneAt (Pos 1 1) stateAfterCaptures `shouldBe` Nothing
