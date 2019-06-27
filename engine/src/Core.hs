@@ -16,9 +16,7 @@ module Core
   , stonesCapturedBy
   , collectCaptures
   , liberties
-  , wouldNotHaveLiberties
   , hasLiberties
-  , opponent
   , occupied
   , nextTurn
   , placeStone
@@ -79,10 +77,6 @@ stonesCapturedBy :: Stone -> State -> Int
 stonesCapturedBy Black Game{blackCaptures} = blackCaptures
 stonesCapturedBy White Game{whiteCaptures} = whiteCaptures
 
-opponent :: Stone -> Stone
-opponent Black = White
-opponent White = Black
-
 addCapturedStone :: Stone -> State -> State
 addCapturedStone Black g@Game{whiteCaptures, turn=White} = g { whiteCaptures=whiteCaptures + 1 }
 addCapturedStone White g@Game{blackCaptures, turn=Black} = g { blackCaptures=blackCaptures + 1 }
@@ -96,9 +90,6 @@ collectCaptures g@Game{board, turn} = foldr addCapturedStone (g { board=withoutC
 
     withoutCaptures :: Board
     withoutCaptures = M.filterWithKey (\pos st -> hasLiberties g pos st || st == turn) board
-
-wouldNotHaveLiberties :: Position -> State -> Bool
-wouldNotHaveLiberties p state = not $ hasLiberties state p (turn state)
 
 hasLiberties :: State -> Position -> Stone -> Bool
 hasLiberties state p s = not $ S.null $ liberties s p state
