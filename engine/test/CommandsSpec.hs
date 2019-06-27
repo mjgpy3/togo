@@ -1,21 +1,11 @@
-{-# LANGUAGE TupleSections #-}
-
 module CommandsSpec (tests) where
 
 import Test.Hspec
 import Core
 import Commands
-
-isOkay :: Either a b -> Bool
-isOkay (Right _) = True
-isOkay _ = False
-
-endedGame :: State
-endedGame = summarize [TurnPassed, TurnPassed]
+import Util
 
 place stone = Place stone . uncurry Pos
-
-atPlaces stone positions = gameOf $ map (, stone) positions
 
 tests :: SpecWith ()
 tests =
@@ -46,8 +36,9 @@ tests =
       it "cannot be placed if it would have no liberties (slightly less obvious)" $ do
         let game = gameOf [ ((0, 0), Black)
                           , ((2, 0), White)
-                          , ((0, 1), White)
-                          , ((1, 1), White)
                           , ((2, 1), Black)
+                          , ((0, 1), White)
+                          , ((10, 10), Black)
+                          , ((1, 1), White)
                           ]
         execute (place Black (1, 0)) game `shouldBe` Left PlacementHasNoLiberties

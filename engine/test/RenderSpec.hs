@@ -4,6 +4,7 @@ import Test.Hspec
 import Test.QuickCheck
 import Core
 import Render
+import Util
 
 instance Arbitrary Stone where
   arbitrary = elements [Black, White]

@@ -5,7 +5,6 @@ module Core
   , track
   , emptyGame
   , isEndGame
-  , gameOf
   , Position(..)
   , Stone(..)
   , Event(..)
@@ -148,9 +147,6 @@ emptyGame = Game { board=M.empty
 
 mapFst :: (a -> b) -> (a, c) -> (b, c)
 mapFst f (x', y') = (f x', y')
-
-gameOf :: [((Int, Int), Stone)] -> State
-gameOf vs = emptyGame { board=M.fromList (map (mapFst (uncurry Pos)) vs) }
 
 track :: Event -> State -> State
 track TurnPassed g@Game{gameState=InProgress} = nextTurn $ g { gameState=PassedInProgress }

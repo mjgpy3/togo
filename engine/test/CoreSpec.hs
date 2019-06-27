@@ -1,5 +1,3 @@
-{-# LANGUAGE TupleSections #-}
-
 module CoreSpec (tests) where
 
 import Core
@@ -7,12 +5,7 @@ import Data.Foldable (for_)
 import Test.Hspec
 import qualified Data.Set as S
 import Render (render)
-
-stonePlaced stone = StonePlaced stone . uncurry Pos
-
-atPlaces stone positions = gameOf $ map (, stone) positions
-
-passes = 1 `shouldBe` 1
+import Util
 
 tests :: SpecWith ()
 tests =
