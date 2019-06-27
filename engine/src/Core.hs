@@ -88,7 +88,7 @@ collectCaptures g@Game{board} = foldr addCapturedStone (g { board=withoutCapture
     captures = M.elems $ board M.\\ withoutCaptures
 
     withoutCaptures :: Board
-    withoutCaptures = M.filterWithKey (hasLiberties state) board
+    withoutCaptures = M.filterWithKey (hasLiberties g) board
 
 wouldNotHaveLiberties :: Position -> State -> Bool
 wouldNotHaveLiberties p state = not $ hasLiberties state p (turn state)

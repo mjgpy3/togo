@@ -94,3 +94,6 @@ tests =
 
         it "counts that stone as a capture for the capturing color" $
           stonesCapturedBy White stateAfterCaptures `shouldBe` 1
+
+        it "does not affect the opponent's capture count" $
+          stonesCapturedBy Black stateAfterCaptures `shouldBe` 0
