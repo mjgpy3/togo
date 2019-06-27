@@ -1,4 +1,5 @@
 {-# LANGUAGE NamedFieldPuns #-}
+{-# LANGUAGE DeriveGeneric, DeriveAnyClass #-}
 
 module Core
   ( summarize
@@ -27,12 +28,14 @@ module Core
 import qualified Data.Map.Strict as M
 import qualified Data.Set as S
 import Data.Maybe (isJust, isNothing)
+import GHC.Generics
+import Data.Aeson
 
 data Position =
   Pos { x :: Int, y :: Int }
-  deriving (Eq, Show, Ord)
+  deriving (Eq, Show, Ord, Generic, ToJSON, FromJSON)
 
-data Stone = Black | White deriving (Eq, Show)
+data Stone = Black | White deriving (Eq, Show, Generic, ToJSON, FromJSON)
 
 data GameSize = Standard deriving (Eq, Show)
 
@@ -40,7 +43,7 @@ data Event
   = StonePlaced Stone Position
   | TurnPassed
   | PlayerResigned
-  deriving (Eq, Show)
+  deriving (Eq, Show, Generic, ToJSON, FromJSON)
 
 data GameState
   = InProgress

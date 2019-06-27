@@ -25,6 +25,20 @@ packages:
       sha256: a33838b7b1c54f6ac3e1b436b25674948713a4189658e4d82e639b9a689bc90d
   original:
     hackage: guid-0.1.0@sha256:a7c975be473f6f142d5cc1b39bc807a99043d20b1bb0873fdfe7a3ce84d2faf1,1078
+- completed:
+    hackage: aeson-1.4.4.0@sha256:c70d78f78efb1d766f1c5b594c9eadcc1bc9587d83e5a50714b9a91105fb2ca4,6963
+    pantry-tree:
+      size: 40193
+      sha256: b5c00a6bc09240baf60f9c8ecb0653067b533fea42e3aaf151564362479d3d20
+  original:
+    hackage: aeson-1.4.4.0@sha256:c70d78f78efb1d766f1c5b594c9eadcc1bc9587d83e5a50714b9a91105fb2ca4,6963
+- completed:
+    hackage: time-compat-1.9.2.2@sha256:9998dc1b77b5067572ab708e94750f1061152f342e92ad1aba38aae63581174d,4209
+    pantry-tree:
+      size: 3602
+      sha256: 724a63e80871bc6709a2d3ca1c3c7316048e99c9d50b0492f0eff25ce2cecbe0
+  original:
+    hackage: time-compat-1.9.2.2@sha256:9998dc1b77b5067572ab708e94750f1061152f342e92ad1aba38aae63581174d,4209
 snapshots:
 - completed:
     size: 499461

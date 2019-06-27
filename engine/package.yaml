@@ -44,7 +44,7 @@ library:
   - ansi-terminal
   - guid
   - directory
-  - json
+  - aeson
 
 executables:
   engine-exe:
