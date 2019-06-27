@@ -79,63 +79,62 @@ tests =
           it "tracks all liberties without double counting" $
             S.size (liberties Black (Pos 5 5) (Black `atPlaces` [(5, 4), (4, 5), (5, 5), (6, 5), (5, 6)])) `shouldBe` 8
 
-    describe "collectCaptures" $ do
-      describe "given an empty game" $
-        it "makes no change" $
-          collectCaptures emptyGame `shouldBe` emptyGame
+    for_ [(Black, White), (White, Black)] $ \(capturer, captured) ->
+      describe ("collectCaptures when " ++ show capturer ++ " captures " ++ show captured)  $ do
+        describe "given an empty game" $
+          it "makes no change" $
+            collectCaptures emptyGame `shouldBe` emptyGame
 
-      describe "given a board with a simple capture" $ do
-        let piecesBeforeCapture = [ ((0, 1), White)
-                                  , ((1, 0), White)
-                                  , ((2, 1), White)
-                                  , ((1, 1), Black)
-                                  ]
-        let stateAfterCaptures = collectCaptures $ gameOf (((1, 2), White):piecesBeforeCapture)
+        describe "given a board with a simple capture" $ do
+          let piecesBeforeCapture = [ ((0, 1), capturer)
+                                    , ((1, 0), capturer)
+                                    , ((2, 1), capturer)
+                                    , ((1, 1), captured)
+                                    ]
+          let stateAfterCaptures = collectCaptures $ gameOf (((1, 2), capturer):piecesBeforeCapture)
 
-        it ("looks like the following before capture\n" ++ render (gameOf piecesBeforeCapture)) passes
+          it ("looks like the following before capture\n" ++ render (gameOf piecesBeforeCapture)) passes
 
-        it ("looks like the following after capture\n" ++ render stateAfterCaptures) passes
+          it ("looks like the following after capture\n" ++ render stateAfterCaptures) passes
 
-        it "removes the captured stone" $
-          stoneAt (Pos 1 1) stateAfterCaptures `shouldBe` Nothing
+          it "removes the captured stone" $
+            stoneAt (Pos 1 1) stateAfterCaptures `shouldBe` Nothing
 
-        it "counts that stone as a capture for the capturer's color" $
-          stonesCapturedBy White stateAfterCaptures `shouldBe` 1
+          it "counts that stone as a capture for the capturer's color" $
+            stonesCapturedBy capturer stateAfterCaptures `shouldBe` 1
 
-        it "does not affect the captured player's capture count" $
-          stonesCapturedBy Black stateAfterCaptures `shouldBe` 0
+          it "does not affect the captured player's capture count" $
+            stonesCapturedBy captured stateAfterCaptures `shouldBe` 0
 
-        it "does not remove the capturer's stones" $ do
-          for_ [Pos 0 1, Pos 1 0, Pos 1 2, Pos 2 1] $ \pos ->
-            stoneAt pos stateAfterCaptures `shouldBe` Just White
+          it "does not remove the capturer's stones" $ do
+            for_ [Pos 0 1, Pos 1 0, Pos 1 2, Pos 2 1] $ \pos ->
+              stoneAt pos stateAfterCaptures `shouldBe` Just capturer
 
-      describe "given a board with a more complicated capture" $ do
-        let piecesBeforeCapture = [ ((1, 0), White)
-                                  , ((0, 2), White)
-                                  , ((1, 3), White)
-                                  , ((2, 1), White)
-                                  , ((2, 2), White)
-                                  , ((1, 1), Black)
-                                  , ((1, 2), Black)
-                                  ]
-        let stateAfterCaptures = collectCaptures $ gameOf (((0, 1), White):piecesBeforeCapture)
+        describe "given a board with a more complicated capture" $ do
+          let piecesBeforeCapture = [ ((1, 0), capturer)
+                                    , ((0, 2), capturer)
+                                    , ((1, 3), capturer)
+                                    , ((2, 1), capturer)
+                                    , ((2, 2), capturer)
+                                    , ((1, 1), captured)
+                                    , ((1, 2), captured)
+                                    ]
+          let stateAfterCaptures = collectCaptures $ gameOf (((0, 1), capturer):piecesBeforeCapture)
 
-        it ("looks like the following before capture\n" ++ render (gameOf piecesBeforeCapture)) passes
+          it ("looks like the following before capture\n" ++ render (gameOf piecesBeforeCapture)) passes
 
-        it ("looks like the following after capture\n" ++ render stateAfterCaptures) passes
+          it ("looks like the following after capture\n" ++ render stateAfterCaptures) passes
 
-        it "removes the captured stones" $ do
-          stoneAt (Pos 1 1) stateAfterCaptures `shouldBe` Nothing
-          stoneAt (Pos 1 2) stateAfterCaptures `shouldBe` Nothing
+          it "removes the captured stones" $ do
+            stoneAt (Pos 1 1) stateAfterCaptures `shouldBe` Nothing
+            stoneAt (Pos 1 2) stateAfterCaptures `shouldBe` Nothing
 
-        it "counts those stones as a capture for the capturer's color" $
-          stonesCapturedBy White stateAfterCaptures `shouldBe` 2
+          it "counts those stones as a capture for the capturer's color" $
+            stonesCapturedBy capturer stateAfterCaptures `shouldBe` 2
 
-        it "does not affect the captured player's capture count" $
-          stonesCapturedBy Black stateAfterCaptures `shouldBe` 0
+          it "does not affect the captured player's capture count" $
+            stonesCapturedBy captured stateAfterCaptures `shouldBe` 0
 
-        it "does not remove the capturer's stones" $ do
-          for_ [Pos 1 0, Pos 0 2, Pos 1 3, Pos 2 1, Pos 2 2, Pos 0 1] $ \pos ->
-            stoneAt pos stateAfterCaptures `shouldBe` Just White
-
-        
+          it "does not remove the capturer's stones" $ do
+            for_ [Pos 1 0, Pos 0 2, Pos 1 3, Pos 2 1, Pos 2 2, Pos 0 1] $ \pos ->
+              stoneAt pos stateAfterCaptures `shouldBe` Just capturer
