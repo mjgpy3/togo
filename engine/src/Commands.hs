@@ -19,15 +19,18 @@ data Error
   | OutOfBounds
   | GameEnded
   | PlacementHasNoLiberties
+  | Ko
   deriving (Eq, Show)
 
 type CommandResult = Either Error Event
 
-execute :: Command -> State -> CommandResult
-execute command state =
-  if isEndGame state
-  then Left GameEnded
-  else execute' command state
+execute :: Command -> [Event] -> CommandResult
+execute command events =
+  let state = summarize events
+  in
+    if isEndGame state
+    then Left GameEnded
+    else execute' command events state
 
 thrownWhen :: Error -> Bool -> Either Error ()
 thrownWhen err condition =
@@ -56,14 +59,24 @@ guardPieceWouldHaveLiberties current pos state =
   in
     PlacementHasNoLiberties `thrownWhen` not (isSafe || generatesLiberties)
 
-execute' :: Command -> State -> Either Error Event
-execute' (Place s p) state = do
+guardKo :: [Event] -> State -> Stone -> Position -> Either Error ()
+guardKo events state stone pos =
+  let
+    hasEvents = not $ null events
+    previousBoard = board $ summarize $ drop 1 events
+    nextBoard = board $ track (StonePlaced stone pos) state
+  in
+    Ko `thrownWhen` (hasEvents && previousBoard == nextBoard)
+
+execute' :: Command -> [Event] -> State -> Either Error Event
+execute' (Place s p) events state = do
   guardNotOccupied p state
   guardTurn s state
   guardInBoardBoundaries p state
   guardPieceWouldHaveLiberties s p state
+  guardKo events state s p
   pure $ StonePlaced s p
-execute' Pass _ =
+execute' Pass _ _ =
   pure TurnPassed
-execute' Resign _ =
+execute' Resign _ _ =
   pure PlayerResigned

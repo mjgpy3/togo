@@ -3,7 +3,6 @@
 module Core
   ( summarize
   , track
-  , emptyGame
   , isEndGame
   , Position(..)
   , Stone(..)
@@ -12,6 +11,7 @@ module Core
   , GameState(..)
   , State
   , size
+  , board
   , stoneAt
   , stonesCapturedBy
   , collectCaptures

@@ -33,6 +33,7 @@ formatError OutOfTurn = "It's not your turn!"
 formatError OutOfBounds = "That move is not within the bounds of the board!"
 formatError GameEnded = "The game is over, no more moves can be made."
 formatError PlacementHasNoLiberties = "This stone would have no liberties if placed there!"
+formatError Ko = "Placing a stone here would violate Ko (i.e. return the game to its previous state)"
 
 game :: (Member Tty r, Member Matching r) => Sem r ()
 game = do
@@ -54,7 +55,7 @@ game = do
       else do
         command <- parseCommand state
         clearTty
-        case execute command state of
+        case execute command events of
           Left e -> do
             writeTty ("Error: " ++ formatError e)
             play match

@@ -56,9 +56,14 @@ tests =
                           ]
         isOkay $ execute (place White (1, 1)) game
 
-{-
       it "cannot violate the Ko rule (return the game to state before opponent's move)" $ do
-        let game = gameOf [ ((0, 0), Black)
+        let game = gameOf [ ((1, 0), Black)
+                          , ((2, 0), White)
+                          , ((2, 1), Black)
+                          , ((3, 1), White)
+                          , ((1, 2), Black)
+                          , ((2, 2), White)
+                          , ((0, 1), Black)
+                          , ((1, 1), White)
                           ]
-        execute (place Black (1, 0)) game `shouldBe` Left PlacementHasNoLiberties
--}
+        execute (place Black (2, 1)) game `shouldBe` Left Ko
