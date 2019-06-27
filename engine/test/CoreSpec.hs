@@ -91,3 +91,6 @@ tests =
 
         it "removes the stone that was captured" $
           stoneAt (Pos 1 1) stateAfterCaptures `shouldBe` Nothing
+
+        it "counts that stone as a capture for the capturing color" $
+          stonesCapturedBy White stateAfterCaptures `shouldBe` 1

@@ -49,37 +49,46 @@ data GameState
   deriving (Eq, Show)
 
 type Board = M.Map Position Stone
-type State = (Board, GameSize, Stone, GameState)
+data State =
+  Game { board :: Board
+       , gameSize :: GameSize
+       , turn :: Stone
+       , gameState :: GameState
+       , blackCaptures :: Int
+       , whiteCaptures :: Int
+       }
+  deriving (Eq, Show)
 
 isEndGame :: State -> Bool
-isEndGame (_, _, _, EndGame) = True
-isEndGame _ = False
-
-gameSize :: State -> GameSize
-gameSize (_, s, _, _) = s
-
-board :: State -> Board
-board (b, _, _, _) = b
+isEndGame = (== EndGame) . gameState
 
 size :: State -> Int
 size state =
   case gameSize state of
     Standard -> 19
 
-turn :: State -> Stone
-turn (_, _, t, _) = t
-
 withTurn :: Stone -> State -> State
-withTurn stone (b, s, _, gs) = (b, s, stone, gs)
+withTurn stone state = state { turn=stone }
 
 stoneAt :: Position -> State -> Maybe Stone
 stoneAt point state = M.lookup point (board state)
 
 stonesCapturedBy :: Stone -> State -> Int
-stonesCapturedBy _ _ = 0
+stonesCapturedBy Black Game{blackCaptures} = blackCaptures
+stonesCapturedBy White Game{whiteCaptures} = whiteCaptures
+
+addCapturedStone :: Stone -> State -> State
+addCapturedStone Black g@Game{whiteCaptures} = g { whiteCaptures=whiteCaptures + 1 }
+addCapturedStone White g@Game{blackCaptures} = g { blackCaptures=blackCaptures + 1 }
 
 collectCaptures :: State -> State
-collectCaptures state@(stones, s, t, st) = (M.filterWithKey (hasLiberties state) stones, s, t, st)
+collectCaptures g@Game{board} = foldr addCapturedStone (g { board=withoutCaptures }) captures
+  where
+    captures :: [Stone]
+    captures = M.elems $ board M.\\ withoutCaptures
+
+    withoutCaptures :: Board
+    withoutCaptures = M.filterWithKey (hasLiberties state) board
 
 wouldNotHaveLiberties :: Position -> State -> Bool
 wouldNotHaveLiberties p state = not $ hasLiberties state p (turn state)
@@ -129,20 +138,26 @@ occupied :: Position -> State -> Bool
 occupied point state = isJust $ stoneAt point state
 
 emptyGame :: State
-emptyGame = (M.empty, Standard, Black, InProgress)
+emptyGame = Game { board=M.empty
+                 , gameSize=Standard
+                 , turn=Black
+                 , gameState=InProgress
+                 , blackCaptures=0
+                 , whiteCaptures=0
+                 }
 
 mapFst :: (a -> b) -> (a, c) -> (b, c)
 mapFst f (x', y') = (f x', y')
 
 gameOf :: [((Int, Int), Stone)] -> State
-gameOf vs = (M.fromList (map (mapFst (uncurry Pos)) vs), Standard, Black, InProgress)
+gameOf vs = emptyGame { board=M.fromList (map (mapFst (uncurry Pos)) vs) }
 
 track :: Event -> State -> State
-track TurnPassed (b, s, t, InProgress) = (b, s, nextTurn t, PassedInProgress)
-track TurnPassed (b, s, t, PassedInProgress) = (b, s, nextTurn t, EndGame)
-track (StonePlaced s p) (b, sze, t, _) = (placeStone p s b, sze, nextTurn t, InProgress)
-track PlayerResigned (b, s, t, _) = (b, s, nextTurn t, EndGame)
-track _ s@(_, _, _, EndGame) = s
+track TurnPassed g@Game{gameState=InProgress, turn} = g { turn=nextTurn turn, gameState=PassedInProgress }
+track TurnPassed g@Game{turn, gameState=PassedInProgress} = g { turn=nextTurn turn, gameState=EndGame }
+track (StonePlaced s p) g@Game{board, turn} = g { turn=nextTurn turn, board=placeStone p s board, gameState=InProgress }
+track PlayerResigned g@Game{turn} = g { turn=nextTurn turn, gameState=EndGame }
+track _ g@Game{gameState=EndGame} = g
 
 nextTurn :: Stone -> Stone
 nextTurn Black = White
