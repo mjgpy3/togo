@@ -1,3 +1,5 @@
+{-# LANGUAGE TupleSections #-}
+
 module CommandsSpec (tests) where
 
 import Test.Hspec
@@ -13,7 +15,7 @@ endedGame = summarize [TurnPassed, TurnPassed]
 
 place stone = Place stone . uncurry Pos
 
-atPlaces stone positions = gameOf $ map (\pos -> (pos, stone)) positions
+atPlaces stone positions = gameOf $ map (, stone) positions
 
 tests :: SpecWith ()
 tests =
@@ -38,7 +40,7 @@ tests =
       it "cannot be placed when the game has been ended" $
         execute (place Black (5, 6)) endedGame `shouldBe` Left GameEnded
 
-      it "cannot be placed if it would have no liberties (obvious)" $ do
+      it "cannot be placed if it would have no liberties (obvious)" $
         execute (place Black (0, 0)) (White `atPlaces` [(0, 1), (1, 0)]) `shouldBe` Left PlacementHasNoLiberties
 
       it "cannot be placed if it would have no liberties (slightly less obvious)" $ do

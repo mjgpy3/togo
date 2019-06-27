@@ -18,8 +18,9 @@ import Polysemy.State
 import Data.GUID
 import System.Directory
 import Text.JSON
-import Data.List (sort)
-import Data.Maybe (catMaybes)
+import Data.List (sortOn)
+import qualified Data.Ord as Ord
+import Data.Maybe (mapMaybe)
 import Text.Read (readMaybe)
 
 data Matching m a where
@@ -84,7 +85,7 @@ runMatchWithFileSystemStore = interpret $ \case
       exists <- doesDirectoryExist "/tmp/togo"
       unless exists $ createDirectory "/tmp/togo"
       createDirectory (matchDir match)
-      pure $ match
+      pure match
 
     saveEventInFile :: Event -> M.Match -> IO ()
     saveEventInFile event match = do
@@ -93,9 +94,9 @@ runMatchWithFileSystemStore = interpret $ \case
 
     readEventsFromFiles :: M.Match -> IO [Event]
     readEventsFromFiles match = do
-      (fileNumbers :: [Int]) <- catMaybes <$> map readMaybe <$> listDirectory (matchDir match)
-      let sorted = reverse $ sort fileNumbers
-      sortedEventText <- mapM (readFile . ((++) (matchDir match)) . show) sorted
+      (fileNumbers :: [Int]) <- mapMaybe readMaybe <$> listDirectory (matchDir match)
+      let sorted = sortOn Ord.Down fileNumbers
+      sortedEventText <- mapM (readFile . (++) (matchDir match) . show) sorted
       case traverse decode sortedEventText of
         Ok events -> pure events
         _ -> pure []

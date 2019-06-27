@@ -6,7 +6,7 @@ module Match
 
 newtype GameIdentifier = GameIdentifier String
 
-data Match = Match GameIdentifier
+newtype Match = Match GameIdentifier
 
 identifiedBy :: String -> Match
 identifiedBy = Match . GameIdentifier

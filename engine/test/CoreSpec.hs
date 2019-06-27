@@ -1,3 +1,5 @@
+{-# LANGUAGE TupleSections #-}
+
 module CoreSpec (tests) where
 
 import Core
@@ -8,7 +10,7 @@ import Render (render)
 
 stonePlaced stone = StonePlaced stone . uncurry Pos
 
-atPlaces stone positions = gameOf $ map (\pos -> (pos, stone)) positions
+atPlaces stone positions = gameOf $ map (, stone) positions
 
 passes = 1 `shouldBe` 1
 
@@ -72,7 +74,7 @@ tests =
 
       describe "a few more complicated placements" $ do
         describe "more than two stones together" $
-          it "tracks all liberties without double counting" $ do
+          it "tracks all liberties without double counting" $
             S.size (liberties Black (Pos 5 5) (Black `atPlaces` [(4, 5), (5, 5), (6, 5)])) `shouldBe` 8
 
         describe "a stone in the middle of a diamond" $
@@ -106,7 +108,7 @@ tests =
           it "does not affect the captured player's capture count" $
             stonesCapturedBy captured stateAfterCaptures `shouldBe` 0
 
-          it "does not remove the capturer's stones" $ do
+          it "does not remove the capturer's stones" $
             for_ [Pos 0 1, Pos 1 0, Pos 1 2, Pos 2 1] $ \pos ->
               stoneAt pos stateAfterCaptures `shouldBe` Just capturer
 
@@ -135,6 +137,6 @@ tests =
           it "does not affect the captured player's capture count" $
             stonesCapturedBy captured stateAfterCaptures `shouldBe` 0
 
-          it "does not remove the capturer's stones" $ do
+          it "does not remove the capturer's stones" $
             for_ [Pos 1 0, Pos 0 2, Pos 1 3, Pos 2 1, Pos 2 2, Pos 0 1] $ \pos ->
               stoneAt pos stateAfterCaptures `shouldBe` Just capturer

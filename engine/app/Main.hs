@@ -69,7 +69,7 @@ singleGameInMemoryWithIo :: Sem '[State [C.Event], Lift IO] ()
 singleGameInMemoryWithIo = runTtyIo $ runSingleMatchInState game
 
 runSingleGameInMemory :: IO ()
-runSingleGameInMemory = fmap snd $ runM $ runState [] $ singleGameInMemoryWithIo
+runSingleGameInMemory = fmap snd $ runM $ runState [] singleGameInMemoryWithIo
 
 singleGameInFileSystem :: Sem '[Lift IO] ()
 singleGameInFileSystem = runTtyIo $ runMatchWithFileSystemStore game

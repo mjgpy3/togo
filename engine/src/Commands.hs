@@ -37,7 +37,7 @@ thrownWhen err condition =
 
 guardNotOccupied :: Position -> State -> Either Error ()
 guardNotOccupied pos state =
-  LocationAlreadyOccupied `thrownWhen` (occupied pos state)
+  LocationAlreadyOccupied `thrownWhen` occupied pos state
 
 guardTurn :: Stone -> State -> Either Error ()
 guardTurn stone state =
@@ -45,7 +45,7 @@ guardTurn stone state =
 
 guardInBoardBoundaries :: Position -> State -> Either Error ()
 guardInBoardBoundaries Pos{x, y} state =
-  OutOfBounds `thrownWhen` (not (0 <= x && x < size state && 0 <= y && y < size state))
+  OutOfBounds `thrownWhen` not (0 <= x && x < size state && 0 <= y && y < size state)
 
 guardPieceWouldHaveLiberties :: Position -> State -> Either Error ()
 guardPieceWouldHaveLiberties pos state =
