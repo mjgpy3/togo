@@ -6,7 +6,7 @@ module Commands
   , Error(..)
   ) where
 
-import Core (State, Event(..), Stone, Position(..), occupied, turn, size, isEndGame, wouldNotHaveLiberties)
+import Core
 
 data Command
   = Place Stone Position
@@ -47,16 +47,21 @@ guardInBoardBoundaries :: Position -> State -> Either Error ()
 guardInBoardBoundaries Pos{x, y} state =
   OutOfBounds `thrownWhen` not (0 <= x && x < size state && 0 <= y && y < size state)
 
-guardPieceWouldHaveLiberties :: Position -> State -> Either Error ()
-guardPieceWouldHaveLiberties pos state =
-  PlacementHasNoLiberties `thrownWhen` wouldNotHaveLiberties pos state
+guardPieceWouldHaveLiberties :: Stone -> Position -> State -> Either Error ()
+guardPieceWouldHaveLiberties current pos state =
+  let
+    withStonePlaced = placeStone pos current state
+    isSafe = hasLiberties withStonePlaced pos current
+    generatesLiberties = hasLiberties (collectCaptures withStonePlaced) pos current
+  in
+    PlacementHasNoLiberties `thrownWhen` not (isSafe || generatesLiberties)
 
 execute' :: Command -> State -> Either Error Event
 execute' (Place s p) state = do
   guardNotOccupied p state
   guardTurn s state
   guardInBoardBoundaries p state
-  guardPieceWouldHaveLiberties  p state
+  guardPieceWouldHaveLiberties s p state
   pure $ StonePlaced s p
 execute' Pass _ =
   pure TurnPassed

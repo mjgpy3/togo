@@ -4,7 +4,7 @@ module Util (gameOf, passes, stonePlaced, atPlaces, endedGame, isOkay) where
 
 import Core
 
-gameOf = summarize . map (\((x, y), stone) -> StonePlaced stone (Pos x y))
+gameOf = summarize . reverse . map (\((x, y), stone) -> StonePlaced stone (Pos x y))
 
 stonePlaced stone = StonePlaced stone . uncurry Pos
 

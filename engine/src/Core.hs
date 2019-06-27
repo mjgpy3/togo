@@ -17,8 +17,11 @@ module Core
   , collectCaptures
   , liberties
   , wouldNotHaveLiberties
+  , hasLiberties
+  , opponent
   , occupied
   , nextTurn
+  , placeStone
   , turn
   , withTurn
   ) where
@@ -76,18 +79,23 @@ stonesCapturedBy :: Stone -> State -> Int
 stonesCapturedBy Black Game{blackCaptures} = blackCaptures
 stonesCapturedBy White Game{whiteCaptures} = whiteCaptures
 
+opponent :: Stone -> Stone
+opponent Black = White
+opponent White = Black
+
 addCapturedStone :: Stone -> State -> State
-addCapturedStone Black g@Game{whiteCaptures} = g { whiteCaptures=whiteCaptures + 1 }
-addCapturedStone White g@Game{blackCaptures} = g { blackCaptures=blackCaptures + 1 }
+addCapturedStone Black g@Game{whiteCaptures, turn=White} = g { whiteCaptures=whiteCaptures + 1 }
+addCapturedStone White g@Game{blackCaptures, turn=Black} = g { blackCaptures=blackCaptures + 1 }
+addCapturedStone _ g = g
 
 collectCaptures :: State -> State
-collectCaptures g@Game{board} = foldr addCapturedStone (g { board=withoutCaptures }) captures
+collectCaptures g@Game{board, turn} = foldr addCapturedStone (g { board=withoutCaptures }) captures
   where
     captures :: [Stone]
     captures = M.elems $ board M.\\ withoutCaptures
 
     withoutCaptures :: Board
-    withoutCaptures = M.filterWithKey (hasLiberties g) board
+    withoutCaptures = M.filterWithKey (\pos st -> hasLiberties g pos st || st == turn) board
 
 wouldNotHaveLiberties :: Position -> State -> Bool
 wouldNotHaveLiberties p state = not $ hasLiberties state p (turn state)
@@ -105,7 +113,7 @@ liberties stone p = go (S.singleton p) [] p
         alliedNeighborsLiberties =
           case nextToVisit of
             [] -> S.empty
-            (nextPos:remainingToVist) -> go nextVisited remainingToVist nextPos (state { board=placeStone pos stone (board state) })
+            (nextPos:remainingToVist) -> go nextVisited remainingToVist nextPos (placeStone pos stone state)
 
         nextToVisit :: [Position]
         nextToVisit = filter (not . (`S.member` nextVisited)) $ (++) toVisit $ map fst $ filter ((==) stone . snd) occupiedNeighbors
@@ -145,13 +153,10 @@ emptyGame = Game { board=M.empty
                  , whiteCaptures=0
                  }
 
-mapFst :: (a -> b) -> (a, c) -> (b, c)
-mapFst f (x', y') = (f x', y')
-
 track :: Event -> State -> State
 track TurnPassed g@Game{gameState=InProgress} = nextTurn $ g { gameState=PassedInProgress }
 track TurnPassed g@Game{gameState=PassedInProgress} = nextTurn $ g { gameState=EndGame }
-track (StonePlaced s p) g@Game{board} = nextTurn $ collectCaptures $ g { board=placeStone p s board, gameState=InProgress }
+track (StonePlaced s p) g = nextTurn $ collectCaptures $ placeStone p s $ g { gameState=InProgress }
 track PlayerResigned g = nextTurn $ g { gameState=EndGame }
 track _ g@Game{gameState=EndGame} = g
 
@@ -159,8 +164,8 @@ nextTurn :: State -> State
 nextTurn g@Game{turn=Black} = g { turn=White }
 nextTurn g@Game{turn=White} = g { turn=Black }
 
-placeStone :: Position -> Stone -> Board -> Board
-placeStone = M.insert
+placeStone :: Position -> Stone -> State -> State
+placeStone pos st g@Game{board} = g { board=M.insert pos st board }
 
 summarize :: [Event] -> State
 summarize = foldr track emptyGame
