@@ -72,7 +72,7 @@ tests =
 
       describe "a few more complicated placements" $ do
         describe "more than two stones together" $
-          it "tracks all liberties without double counting" $
+          it "tracks all liberties without double counting" $ do
             S.size (liberties Black (Pos 5 5) (Black `atPlaces` [(4, 5), (5, 5), (6, 5)])) `shouldBe` 8
 
         describe "a stone in the middle of a diamond" $

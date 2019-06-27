@@ -106,17 +106,17 @@ liberties stone p = go (S.singleton p) [] p
         alliedNeighborsLiberties =
           case nextToVisit of
             [] -> S.empty
-            (nextPos:remainingToVist) -> go nextVisited remainingToVist nextPos (track (StonePlaced stone pos) state)
+            (nextPos:remainingToVist) -> go nextVisited remainingToVist nextPos (state { board=placeStone pos stone (board state) })
 
         nextToVisit :: [Position]
-        nextToVisit = filter (not . (`S.member` nextVisited)) $ (++) toVisit $ map fst $ filter ((==) stone . snd) $ occupiedNeighbors
+        nextToVisit = filter (not . (`S.member` nextVisited)) $ (++) toVisit $ map fst $ filter ((==) stone . snd) occupiedNeighbors
 
         nextVisited :: S.Set Position
         nextVisited = S.insert pos visited
 
         unoccupiedNeighbors :: S.Set Position
         unoccupiedNeighbors =
-          S.fromList $ filter (isNothing . (`stoneAt` state)) $ neighboringPositions
+          S.fromList $ filter (isNothing . (`stoneAt` state)) neighboringPositions
 
         occupiedNeighbors :: [(Position, Stone)]
         occupiedNeighbors = do
@@ -153,15 +153,15 @@ gameOf :: [((Int, Int), Stone)] -> State
 gameOf vs = emptyGame { board=M.fromList (map (mapFst (uncurry Pos)) vs) }
 
 track :: Event -> State -> State
-track TurnPassed g@Game{gameState=InProgress, turn} = g { turn=nextTurn turn, gameState=PassedInProgress }
-track TurnPassed g@Game{turn, gameState=PassedInProgress} = g { turn=nextTurn turn, gameState=EndGame }
-track (StonePlaced s p) g@Game{board, turn} = g { turn=nextTurn turn, board=placeStone p s board, gameState=InProgress }
-track PlayerResigned g@Game{turn} = g { turn=nextTurn turn, gameState=EndGame }
+track TurnPassed g@Game{gameState=InProgress} = nextTurn $ g { gameState=PassedInProgress }
+track TurnPassed g@Game{gameState=PassedInProgress} = nextTurn $ g { gameState=EndGame }
+track (StonePlaced s p) g@Game{board} = nextTurn $ collectCaptures $ g { board=placeStone p s board, gameState=InProgress }
+track PlayerResigned g = nextTurn $ g { gameState=EndGame }
 track _ g@Game{gameState=EndGame} = g
 
-nextTurn :: Stone -> Stone
-nextTurn Black = White
-nextTurn White = Black
+nextTurn :: State -> State
+nextTurn g@Game{turn=Black} = g { turn=White }
+nextTurn g@Game{turn=White} = g { turn=Black }
 
 placeStone :: Position -> Stone -> Board -> Board
 placeStone = M.insert

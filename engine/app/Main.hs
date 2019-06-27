@@ -45,6 +45,8 @@ game = do
       let state = C.summarize events
 
       writeTty (show (C.turn state) ++ "'s turn")
+      writeTty $ renderCapturesBy C.Black state
+      writeTty $ renderCapturesBy C.White state
       writeTty $ renderWithColRow state
       if C.isEndGame state
       then
@@ -59,6 +61,9 @@ game = do
           Right event -> do
             saveEvent event match
             play match
+
+renderCapturesBy :: C.Stone -> C.State -> String
+renderCapturesBy stone state = "Stones captured by " ++ show stone ++ ": " ++ show (C.stonesCapturedBy stone state)
 
 singleGameInMemoryWithIo :: Sem '[State [C.Event], Lift IO] ()
 singleGameInMemoryWithIo = runTtyIo $ runSingleMatchInState game

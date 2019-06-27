@@ -38,7 +38,7 @@ tests =
       it "cannot be placed when the game has been ended" $
         execute (place Black (5, 6)) endedGame `shouldBe` Left GameEnded
 
-      it "cannot be placed if it would have no liberties (obvious)" $
+      it "cannot be placed if it would have no liberties (obvious)" $ do
         execute (place Black (0, 0)) (White `atPlaces` [(0, 1), (1, 0)]) `shouldBe` Left PlacementHasNoLiberties
 
       it "cannot be placed if it would have no liberties (slightly less obvious)" $ do
