@@ -11,7 +11,7 @@ module Effects.Matching
   ) where
 
 import Control.Monad (unless)
-import Core(Event(..), Stone(..), Position(..))
+import Core(Event(..))
 import qualified Match as M
 import Polysemy
 import Polysemy.State
