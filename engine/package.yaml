@@ -47,9 +47,9 @@ library:
   - aeson
 
 executables:
-  engine-exe:
+  engine-cli:
     main:                Main.hs
-    source-dirs:         app
+    source-dirs:         cli
     ghc-options:
     - -threaded
     - -rtsopts
@@ -57,6 +57,18 @@ executables:
     dependencies:
     - engine
     - containers
+
+  engine-api:
+    main:                Main.hs
+    source-dirs:         api
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - engine
+    - containers
+    - servant
 
 tests:
   engine-test:
