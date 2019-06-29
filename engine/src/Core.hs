@@ -1,5 +1,6 @@
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE DeriveGeneric, DeriveAnyClass #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Core
   ( summarize
@@ -39,6 +40,11 @@ data Stone = Black | White deriving (Eq, Show, Generic, ToJSON, FromJSON)
 
 data GameSize = Standard deriving (Eq, Show)
 
+instance ToJSON GameSize where
+  toJSON sz = object [ "width" .= dimension sz,
+                       "height" .= dimension sz
+                     ]
+
 data Event
   = StonePlaced Stone Position
   | TurnPassed
@@ -49,7 +55,7 @@ data GameState
   = InProgress
   | PassedInProgress
   | EndGame
-  deriving (Eq, Show)
+  deriving (Eq, Show, Generic, ToJSON)
 
 type Board = M.Map Position Stone
 data State =
@@ -62,13 +68,26 @@ data State =
        }
   deriving (Eq, Show)
 
+instance ToJSON State where
+  toJSON Game{board, gameSize, turn, gameState, blackCaptures, whiteCaptures} =
+    object [ "gameSize" .= gameSize
+           , "turn" .= turn
+           , "gameState" .= gameState
+           , "white" .= object [ "captures" .= whiteCaptures
+                               , "positions" .= M.keys (M.filter (== White) board) ]
+
+           , "black" .= object [ "captures" .= blackCaptures
+                               , "positions" .= M.keys (M.filter (== Black) board) ]
+           ]
+
 isEndGame :: State -> Bool
 isEndGame = (== EndGame) . gameState
 
 size :: State -> Int
-size state =
-  case gameSize state of
-    Standard -> 19
+size = dimension . gameSize
+
+dimension :: GameSize -> Int
+dimension Standard = 19
 
 withTurn :: Stone -> State -> State
 withTurn stone state = state { turn=stone }
