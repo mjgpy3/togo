@@ -1,6 +1,6 @@
 module Main where
 
-import Commands (execute, Command(..), Error(..))
+import Commands (execute, Command(..), Error(..), formatError)
 import qualified Core as C
 import qualified Match as M
 import Data.Char (toLower)
@@ -26,14 +26,6 @@ parseCommand state = do
     _ -> do
       writeTty $ "Expected two numbers, \"pass\" or \"resign\" but got " ++ line
       parseCommand state
-
-formatError :: Error -> String
-formatError LocationAlreadyOccupied = "That position is already taken!"
-formatError OutOfTurn = "It's not your turn!"
-formatError OutOfBounds = "That move is not within the bounds of the board!"
-formatError GameEnded = "The game is over, no more moves can be made."
-formatError PlacementHasNoLiberties = "This stone would have no liberties if placed there!"
-formatError Ko = "Placing a stone here would violate Ko (i.e. return the game to its previous state)"
 
 game :: (Member Tty r, Member Matching r) => Sem r ()
 game = do
