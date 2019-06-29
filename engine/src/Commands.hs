@@ -12,8 +12,8 @@ import Core
 
 data Command
   = Place Stone Position
-  | Pass
-  | Resign
+  | Pass Stone
+  | Resign Stone
 
 data Error
   = LocationAlreadyOccupied
@@ -86,7 +86,7 @@ execute' (Place s p) events state = do
   guardPieceWouldHaveLiberties s p state
   guardKo events state s p
   pure $ StonePlaced s p
-execute' Pass _ _ =
-  pure TurnPassed
-execute' Resign _ _ =
-  pure PlayerResigned
+execute' (Pass s) _ state =
+  guardTurn s state >> pure TurnPassed
+execute' (Resign s) _ state =
+  guardTurn s state >> pure PlayerResigned

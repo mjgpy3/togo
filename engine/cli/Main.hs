@@ -18,9 +18,9 @@ parseCommand state = do
   let yText = dropWhile (/= ' ') line
   case (map toLower xText == "pass", map toLower xText == "resign", readMaybe xText, readMaybe yText) of
     (True, _, _, _) ->
-      pure Pass
+      pure $ Pass $ C.turn state
     (_, True, _, _) ->
-      pure Resign
+      pure $ Resign $ C.turn state
     (_, _, Just x', Just y') ->
       pure (Place (C.turn state) (C.Pos {C.x=x'-1, C.y=y'-1}))
     _ -> do
