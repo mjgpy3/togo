@@ -42,12 +42,13 @@ server = getGameAction :<|> makeMatchAction :<|> placeStoneAction
     commandAction matchId c = do
       game <- liftIO $ runM $ command matchId c
       case game of
-        Right g' -> pure g' Left MatchNotFound -> throwError $ err404 { errBody = "Could not find match" }
+        Right g' -> pure g'
+        Left MatchNotFound -> throwError $ err404 { errBody = "Could not find match" }
         Left (CommandError e) -> throwError $ err400 { errBody = pack $ formatError e }
 
     makeMatchAction :: Handler M.Match
     makeMatchAction = liftIO $ runM makeMatch
-   
+
     getGameAction :: String -> Handler C.State
     getGameAction matchId = do
       game <- liftIO $ runM $ getGame matchId
