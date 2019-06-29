@@ -13,12 +13,16 @@ import Effects.Matching
 import Polysemy
 
 type API
-  = "match" :> Capture "id" String :> "game" :> Get '[JSON] C.State
+  =    "api" :> "match" :> Capture "id" String :> "game" :> Get '[JSON] C.State
+  :<|> "api" :> "match" :> Post '[JSON] M.Match
 
 server :: Server API
-server = getGameAction
+server = getGameAction :<|> makeMatchAction
 
   where
+    makeMatchAction :: Handler M.Match
+    makeMatchAction = liftIO $ runM makeMatch
+   
     getGameAction :: String -> Handler C.State
     getGameAction matchId = do
       game <- liftIO $ runM $ getGame matchId
@@ -29,12 +33,15 @@ server = getGameAction
     getGame :: String -> Sem '[Lift IO] (Maybe C.State)
     getGame = runMatchWithFileSystemStore . getGame'
 
-    getGame' :: (Member Matching r) => String -> Sem r (Maybe C.State)
+    getGame' :: Member Matching r => String -> Sem r (Maybe C.State)
     getGame' matchId = do
       match <- getMatch matchId
       case match of
         Nothing -> pure Nothing
         Just m -> Just . C.summarize <$> getEvents m
+
+    makeMatch :: Sem '[Lift IO] M.Match
+    makeMatch = runMatchWithFileSystemStore createMatch
 
 api :: Proxy API
 api = Proxy

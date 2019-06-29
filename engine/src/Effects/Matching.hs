@@ -32,10 +32,10 @@ makeSem ''Matching
 
 runSingleMatchInState :: Member (State [Event]) r => Sem (Matching ': r) a -> Sem r a
 runSingleMatchInState = interpret $ \case
-  CreateMatch -> pure $ M.identifiedBy "fake"
+  CreateMatch -> pure $ M.Match "fake"
   SaveEvent event _ -> modify ((:) event)
   GetEvents _ -> get
-  GetMatch _ -> pure $ Just $ M.identifiedBy "fake"
+  GetMatch _ -> pure $ Just $ M.Match "fake"
 
 runMatchWithFileSystemStore :: Member (Lift IO) r => Sem (Matching ': r) a -> Sem r a
 runMatchWithFileSystemStore = interpret $ \case
@@ -50,14 +50,14 @@ runMatchWithFileSystemStore = interpret $ \case
 
     toMatchIfExists :: String -> IO (Maybe M.Match)
     toMatchIfExists matchId = do
-      let match = M.identifiedBy matchId
+      let match = M.Match matchId
       exists <- doesDirectoryExist (matchDir match)
       pure $ if exists then Just match else Nothing
 
     createMatchAndDir :: IO M.Match
     createMatchAndDir = do
       guid <- genString
-      let match = M.identifiedBy guid
+      let match = M.Match guid
       exists <- doesDirectoryExist "/tmp/togo"
       unless exists $ createDirectory "/tmp/togo"
       createDirectory (matchDir match)

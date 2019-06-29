@@ -1,15 +1,11 @@
+{-# LANGUAGE DeriveGeneric, DeriveAnyClass #-}
+
 module Match
-  ( identifiedBy
-  , identifier
-  , Match
+  ( Match(..)
   ) where
 
-newtype GameIdentifier = GameIdentifier String
+import GHC.Generics
+import Data.Aeson
 
-newtype Match = Match GameIdentifier
-
-identifiedBy :: String -> Match
-identifiedBy = Match . GameIdentifier
-
-identifier :: Match -> String
-identifier (Match (GameIdentifier ident)) = ident
+newtype Match = Match { identifier :: String }
+  deriving (Generic, ToJSON)
