@@ -1,13 +1,13 @@
 {-# LANGUAGE NamedFieldPuns #-}
 
 module Effects.Matching
-  (
-    Matching(..)
+  ( Matching(..)
   , runSingleMatchInState
   , runMatchWithFileSystemStore
   , createMatch
   , saveEvent
   , getEvents
+  , getMatch
   ) where
 
 import Control.Monad (unless)
@@ -27,6 +27,7 @@ data Matching m a where
   CreateMatch :: Matching m M.Match
   SaveEvent :: Event -> M.Match -> Matching m ()
   GetEvents :: M.Match -> Matching m [Event]
+  GetMatch :: String -> Matching m (Maybe M.Match)
 makeSem ''Matching
 
 runSingleMatchInState :: Member (State [Event]) r => Sem (Matching ': r) a -> Sem r a
@@ -34,16 +35,24 @@ runSingleMatchInState = interpret $ \case
   CreateMatch -> pure $ M.identifiedBy "fake"
   SaveEvent event _ -> modify ((:) event)
   GetEvents _ -> get
+  GetMatch _ -> pure $ Just $ M.identifiedBy "fake"
 
 runMatchWithFileSystemStore :: Member (Lift IO) r => Sem (Matching ': r) a -> Sem r a
 runMatchWithFileSystemStore = interpret $ \case
   CreateMatch -> sendM createMatchAndDir
   SaveEvent event match -> sendM $ saveEventInFile event match
   GetEvents match -> sendM $ readEventsFromFiles match
+  GetMatch matchId -> sendM $ toMatchIfExists matchId
 
   where
     matchDir :: M.Match -> String
     matchDir match = "/tmp/togo/" ++ M.identifier match ++ "/"
+
+    toMatchIfExists :: String -> IO (Maybe M.Match)
+    toMatchIfExists matchId = do
+      let match = M.identifiedBy matchId
+      exists <- doesDirectoryExist (matchDir match)
+      pure $ if exists then Just match else Nothing
 
     createMatchAndDir :: IO M.Match
     createMatchAndDir = do
