@@ -18,12 +18,13 @@ type API
   =    "api" :> "match" :> Capture "id" String :> "game" :> Get '[JSON] C.State
   :<|> "api" :> "match" :> Post '[JSON] M.Match
   :<|> "api" :> "match" :> Capture "id" String :> Capture "color" C.Stone :> "place" :> Capture "x" Int :> Capture "y" Int :> Post '[JSON] C.State
+  :<|> "api" :> "match" :> Capture "id" String :> Capture "color" C.Stone :> "pass" :> Post '[JSON] C.State
+  :<|> "api" :> "match" :> Capture "id" String :> Capture "color" C.Stone :> "resign" :> Post '[JSON] C.State
 
 instance FromHttpApiData C.Stone where
   parseUrlPiece "black" = pure C.Black
   parseUrlPiece "Black" = pure C.Black
   parseUrlPiece "white" = pure C.White
-  parseUrlPiece "White" = pure C.White
   parseUrlPiece "White" = pure C.White
   parseUrlPiece _ = Left "Unrecognized stone color, must be \"Black\" or \"White\""
 
@@ -32,11 +33,21 @@ data ApiCommandError
   | MatchNotFound
 
 server :: Server API
-server = getGameAction :<|> makeMatchAction :<|> placeStoneAction
+server = getGameAction
+    :<|> makeMatchAction
+    :<|> placeStoneAction
+    :<|> passAction
+    :<|> resignAction
 
   where
     placeStoneAction :: String -> Stone -> Int -> Int -> Handler C.State
-    placeStoneAction matchId s x y = commandAction matchId (Place s (C.Pos x y))
+    placeStoneAction matchId s x' y' = commandAction matchId (Place s (C.Pos x' y'))
+
+    passAction :: String -> Stone -> Handler C.State
+    passAction matchId = commandAction matchId . Pass
+
+    resignAction :: String -> Stone -> Handler C.State
+    resignAction matchId = commandAction matchId . Resign
 
     commandAction :: String -> Command -> Handler C.State
     commandAction matchId c = do
