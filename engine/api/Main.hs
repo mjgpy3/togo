@@ -20,6 +20,7 @@ type API
   :<|> "api" :> "match" :> Capture "id" String :> Capture "color" C.Stone :> "place" :> Capture "x" Int :> Capture "y" Int :> Post '[JSON] C.State
   :<|> "api" :> "match" :> Capture "id" String :> Capture "color" C.Stone :> "pass" :> Post '[JSON] C.State
   :<|> "api" :> "match" :> Capture "id" String :> Capture "color" C.Stone :> "resign" :> Post '[JSON] C.State
+  :<|> "ui" :> Raw
 
 instance FromHttpApiData C.Stone where
   parseUrlPiece "black" = pure C.Black
@@ -38,6 +39,7 @@ server = getGameAction
     :<|> placeStoneAction
     :<|> passAction
     :<|> resignAction
+    :<|> serveDirectoryWebApp "../../ui/dist"
 
   where
     placeStoneAction :: String -> Stone -> Int -> Int -> Handler C.State
