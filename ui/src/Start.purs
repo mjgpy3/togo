@@ -4,7 +4,8 @@ import Prelude
 
 import Affjax as AX
 import Affjax.ResponseFormat as AXRF
-import Data.Either (hush)
+import Affjax.RequestBody as AXRB
+import Data.Either (hush, Either(..))
 import Data.Maybe (Maybe(..))
 import Effect.Aff.Class (class MonadAff)
 import Halogen as H
@@ -13,16 +14,23 @@ import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Web.Event.Event (Event)
 import Web.Event.Event as Event
+import Data.Argonaut.Core as A
+import Data.Argonaut.Decode (class DecodeJson, decodeJson, (.:))
 
-type State =
-  { loading :: Boolean
-  , username :: String
-  , result :: Maybe String
-  }
+data State
+  = NoneYet
+  | Loading
+  | UnexpectedError
+  | NewLocalMatch String
+
+instance decodeJsonState :: DecodeJson State where
+  decodeJson json = do
+    x <- decodeJson json
+    identifier <- x .: "identifier"
+    pure $ NewLocalMatch identifier
 
 data Action
-  = SetUsername String
-  | MakeRequest Event
+  = StartNewLocalMatch Event
 
 component :: forall f i o m. MonadAff m => H.Component HH.HTML f i o m
 component =
@@ -33,45 +41,35 @@ component =
     }
 
 initialState :: forall i. i -> State
-initialState _ = { loading: false, username: "", result: Nothing }
+initialState _ = NoneYet
 
 render :: forall m. State -> H.ComponentHTML Action () m
-render st =
+render NoneYet =
   HH.form
-    [ HE.onSubmit (Just <<< MakeRequest) ]
-    [ HH.h1_ [ HH.text "Lookup GitHub user" ]
-    , HH.label_
-        [ HH.div_ [ HH.text "Enter username:" ]
-        , HH.input
-            [ HP.value st.username
-            , HE.onValueInput (Just <<< SetUsername)
-            ]
-        ]
-    , HH.button
-        [ HP.disabled st.loading
-        , HP.type_ HP.ButtonSubmit
-        ]
-        [ HH.text "Fetch info" ]
+    [ HE.onSubmit (Just <<< StartNewLocalMatch) ]
+    [ HH.h1_ [ HH.text "Togo" ]
     , HH.p_
-        [ HH.text (if st.loading then "Working..." else "") ]
-    , HH.div_
-        case st.result of
-          Nothing -> []
-          Just res ->
-            [ HH.h2_
-                [ HH.text "Response:" ]
-            , HH.pre_
-                [ HH.code_ [ HH.text res ] ]
-            ]
+        [ HH.text "At the moment we only have one game mode..." ]
+    , HH.button
+        [ HP.type_ HP.ButtonSubmit ]
+        [ HH.text "Play single match" ]
     ]
+render Loading = HH.p_ [ HH.text "Loading..." ]
+render UnexpectedError = HH.p_ [ HH.text "An unexpected error has occured, please try again later..." ]
+render (NewLocalMatch id) = HH.p_ [ HH.text ("New match " <> id) ]
 
 handleAction :: forall o m. MonadAff m => Action -> H.HalogenM State Action () o m Unit
 handleAction = case _ of
-  SetUsername username -> do
-    H.modify_ (_ { username = username, result = Nothing :: Maybe String })
-  MakeRequest event -> do
+  StartNewLocalMatch event -> do
     H.liftEffect $ Event.preventDefault event
-    username <- H.gets _.username
-    H.modify_ (_ { loading = true })
-    response <- H.liftAff $ AX.get AXRF.string ("https://api.github.com/users/" <> username)
-    H.modify_ (_ { loading = false, result = hush response.body })
+    H.put Loading
+    response <- H.liftAff $ AX.post AXRF.json "/api/match" (AXRB.string "")
+    H.put $ newState $ hush response.body
+
+  where
+    newState :: Maybe A.Json -> State
+    newState Nothing = UnexpectedError
+    newState (Just json) =
+      case decodeJson json of
+        Right v -> v
+        Left _ -> UnexpectedError
