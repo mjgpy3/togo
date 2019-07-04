@@ -6,7 +6,7 @@ import Affjax as AX
 import Affjax.ResponseFormat as AXRF
 import Affjax.RequestBody as AXRB
 import Data.Either (hush, Either(Left))
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), fromMaybe)
 import Effect.Aff.Class (class MonadAff)
 import Halogen as H
 import Halogen.HTML as HH
@@ -120,14 +120,15 @@ render (LocalMatch _ game) = renderGame game
 renderGame :: forall m. Game -> H.ComponentHTML Action () m
 renderGame (Game g) =
   HH.table [ style do CSS.key (CSS.fromString "border-spacing") (CSS.px 0.0)
-                      CSS.border CSS.solid (CSS.px 2.0) (CSS.graytone 0.2)] $ do
+                      CSS.border CSS.solid (CSS.px 2.0) (CSS.graytone 0.2) 
+                      CSS.backgroundColor (fromMaybe (CSS.graytone 0.5) $ CSS.fromHexString "#966F33") ] $ do
     y <- Array.range 0 g.height
     pure $ HH.tr_ $ do
       x <- Array.range 0 g.width
       pure $ HH.td [ style do CSS.border CSS.solid (CSS.px 2.0) CSS.black
                               CSS.height (CSS.rem 2.5)
                               CSS.width (CSS.rem 2.5)
-                              CSS.backgroundColor (CSS.graytone 0.5) ]
+                               ]
         []
 
 
