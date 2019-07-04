@@ -3,11 +3,11 @@ module Main where
 import Prelude
 
 import Effect (Effect)
-import Start as Start
+import Game as Game
 import Halogen.Aff as HA
 import Halogen.VDom.Driver (runUI)
 
 main :: Effect Unit
-main = HA.runHalogenAff do
+main = HA.runHalogenAff $ do
   body <- HA.awaitBody
-  runUI Start.component unit body
+  runUI Game.component unit body
