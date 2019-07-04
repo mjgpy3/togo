@@ -21,7 +21,7 @@ data State
   = NoneYet
   | Loading
   | UnexpectedError
-  | LocalMatch A.Json
+  | LocalMatch MatchIdentifier A.Json
 
 data MatchIdentifier = MatchIdentifier String
 
@@ -58,7 +58,7 @@ render NoneYet =
     ]
 render Loading = HH.p_ [ HH.text "Loading..." ]
 render UnexpectedError = HH.p_ [ HH.text "An unexpected error has occured, please try again later..." ]
-render (LocalMatch matchJson) = HH.p_ [ HH.text ("New match " <> A.stringify matchJson) ]
+render (LocalMatch _ matchJson) = HH.p_ [ HH.text ("New match " <> A.stringify matchJson) ]
 
 noContent :: AXRB.RequestBody
 noContent = AXRB.string ""
@@ -73,11 +73,11 @@ handleAction = case _ of
       Nothing -> H.put UnexpectedError
       Just (MatchIdentifier matchId) -> do
         gameResponse <- H.liftAff $ AX.get AXRF.json ("/api/match/" <> matchId <> "/game")
-        H.put $ stateFrom gameResponse.body
+        H.put $ stateFrom (MatchIdentifier matchId) gameResponse.body
 
   where
     matchIdentifer :: forall e. Either e A.Json -> Maybe MatchIdentifier
     matchIdentifer = hush >=> (hush <<< decodeJson)
 
-    stateFrom :: forall e. Either e A.Json -> State
-    stateFrom = either (const UnexpectedError) LocalMatch
+    stateFrom :: forall e. MatchIdentifier -> Either e A.Json -> State
+    stateFrom matchId = either (const UnexpectedError) (LocalMatch matchId)
