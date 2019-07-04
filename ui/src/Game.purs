@@ -19,6 +19,7 @@ import Data.Argonaut.Decode (class DecodeJson, decodeJson, (.:))
 import Halogen.HTML.CSS (style)
 import CSS as CSS
 import Data.Array as Array
+import Data.Foldable (elem)
 
 newtype Position
   = Pos { x :: Int
@@ -156,12 +157,15 @@ renderGame { game: Game g, currentHighlight, matchId } =
                    ]
             (
               let
-                highlightable x' y' = [ HE.onMouseOver (Just <<< const (HighlightStone $ Pos { x: x', y: y' }))
-                                      , HE.onClick (Just <<< const (PlaceStone g.turn matchId $ Pos { x: x', y: y' }))
-                                      ]
+                mkHighlightable x' y' = [ HE.onMouseOver (Just <<< const (HighlightStone $ Pos { x: x', y: y' }))
+                                        , HE.onClick (Just <<< const (PlaceStone g.turn matchId $ Pos { x: x', y: y' }))
+                                        ]
 
                 withinBounds x' y' =
                   0 <= x' && x' < g.width && 0 <= y' && y' < g.height
+
+                notTaken x' y' =
+                  not (Pos { x: x', y: y' } `elem` (g.whitePositions <> g.blackPositions))
 
                 highlighted x' y' =
                   Just (Pos { x: x', y: y' }) == currentHighlight
@@ -169,7 +173,7 @@ renderGame { game: Game g, currentHighlight, matchId } =
                 highlight = [ style do CSS.backgroundColor (fromMaybe (CSS.graytone 0.5) $ CSS.fromHexString "#FF0") ]
 
                 chunkAt x' y' =
-                  HH.td ((if withinBounds x' y' then highlightable x' y' else []) <> (if highlighted x' y' then highlight else [])) []
+                  HH.td ((if withinBounds x' y' && notTaken x' y' then mkHighlightable x' y' else []) <> (if highlighted x' y' then highlight else [])) []
               in
                 [ HH.tr_ [ chunkAt (x - 1) (y - 1)
                          , chunkAt x (y - 1)
