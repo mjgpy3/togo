@@ -16,6 +16,9 @@ import Web.Event.Event (Event)
 import Web.Event.Event as Event
 import Data.Argonaut.Core as A
 import Data.Argonaut.Decode (class DecodeJson, decodeJson, (.:))
+import Halogen.HTML.CSS (style)
+import CSS as CSS
+import Data.Array as Array
 
 newtype Position
   = Pos { x :: Int
@@ -112,7 +115,21 @@ render NoneYet =
     ]
 render Loading = HH.p_ [ HH.text "Loading..." ]
 render UnexpectedError = HH.p_ [ HH.text "An unexpected error has occured, please try again later..." ]
-render (LocalMatch _ _) = HH.p_ [ HH.text "New match " ]
+render (LocalMatch _ game) = renderGame game
+
+renderGame :: forall m. Game -> H.ComponentHTML Action () m
+renderGame (Game g) =
+  HH.table [ style do CSS.key (CSS.fromString "border-spacing") (CSS.px 0.0)
+                      CSS.border CSS.solid (CSS.px 2.0) (CSS.graytone 0.2)] $ do
+    y <- Array.range 0 g.height
+    pure $ HH.tr_ $ do
+      x <- Array.range 0 g.width
+      pure $ HH.td [ style do CSS.border CSS.solid (CSS.px 2.0) CSS.black
+                              CSS.height (CSS.rem 2.5)
+                              CSS.width (CSS.rem 2.5)
+                              CSS.backgroundColor (CSS.graytone 0.5) ]
+        []
+
 
 noContent :: AXRB.RequestBody
 noContent = AXRB.string ""
