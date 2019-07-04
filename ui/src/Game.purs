@@ -5,7 +5,7 @@ import Prelude
 import Affjax as AX
 import Affjax.ResponseFormat as AXRF
 import Affjax.RequestBody as AXRB
-import Data.Either (hush, Either, either)
+import Data.Either (hush, Either(Left))
 import Data.Maybe (Maybe(..))
 import Effect.Aff.Class (class MonadAff)
 import Halogen as H
@@ -17,15 +17,69 @@ import Web.Event.Event as Event
 import Data.Argonaut.Core as A
 import Data.Argonaut.Decode (class DecodeJson, decodeJson, (.:))
 
+newtype Position
+  = Pos { x :: Int
+        , y :: Int
+        }
+
+data Stone
+  = Black
+  | White
+
+newtype Game
+  = Game { whiteCaptures :: Int
+         , whitePositions :: Array Position
+         , blackCaptures :: Int
+         , blackPositions :: Array Position
+         , turn :: Stone
+         , height :: Int
+         , width :: Int
+         , over :: Boolean
+         }
+
 data State
   = NoneYet
   | Loading
   | UnexpectedError
-  | LocalMatch MatchIdentifier A.Json
+  | LocalMatch MatchIdentifier Game
 
 data MatchIdentifier = MatchIdentifier String
 
-instance decodeJsonState :: DecodeJson MatchIdentifier where
+instance decodeJsonPosition :: DecodeJson Position where
+  decodeJson json = do
+    obj <- decodeJson json
+    x <- obj .: "x"
+    y <- obj .: "y"
+    pure $ Pos { x, y }
+
+instance decodeJsonStone :: DecodeJson Stone where
+  decodeJson =
+    A.caseJsonString (Left "Expected a string") $ case _ of
+      "Black" -> pure Black
+      "White" -> pure White
+      _ -> Left "Expected exactly \"Black\" or \"White\""
+
+instance decodeJsonGame :: DecodeJson Game where
+  decodeJson json = do
+    obj <- decodeJson json
+    white <- obj .: "white"
+    whiteCaptures <- white .: "captures"
+    whitePositions <- white .: "positions"
+    black <- obj .: "black"
+    blackCaptures <- black .: "captures"
+    blackPositions <- black .: "positions"
+    turn <- obj .: "turn"
+    pure $ Game { whiteCaptures
+                , whitePositions
+                , blackCaptures
+                , blackPositions
+                , turn
+                , height: 19
+                , width: 19
+                , over: false
+                }
+
+instance decodeJsonMatchIdentifier :: DecodeJson MatchIdentifier where
   decodeJson json = do
     x <- decodeJson json
     identifier <- x .: "identifier"
@@ -58,7 +112,7 @@ render NoneYet =
     ]
 render Loading = HH.p_ [ HH.text "Loading..." ]
 render UnexpectedError = HH.p_ [ HH.text "An unexpected error has occured, please try again later..." ]
-render (LocalMatch _ matchJson) = HH.p_ [ HH.text ("New match " <> A.stringify matchJson) ]
+render (LocalMatch _ _) = HH.p_ [ HH.text "New match " ]
 
 noContent :: AXRB.RequestBody
 noContent = AXRB.string ""
@@ -69,15 +123,15 @@ handleAction = case _ of
     H.liftEffect $ Event.preventDefault event
     H.put Loading
     createMatchResponse <- H.liftAff $ AX.post AXRF.json "/api/match" noContent
-    case matchIdentifer createMatchResponse.body of
+    case justDecode createMatchResponse.body of
       Nothing -> H.put UnexpectedError
       Just (MatchIdentifier matchId) -> do
         gameResponse <- H.liftAff $ AX.get AXRF.json ("/api/match/" <> matchId <> "/game")
-        H.put $ stateFrom (MatchIdentifier matchId) gameResponse.body
+        case justDecode gameResponse.body of
+          Nothing -> H.put UnexpectedError
+          Just game ->
+            H.put $ LocalMatch (MatchIdentifier matchId) game
 
   where
-    matchIdentifer :: forall e. Either e A.Json -> Maybe MatchIdentifier
-    matchIdentifer = hush >=> (hush <<< decodeJson)
-
-    stateFrom :: forall e. MatchIdentifier -> Either e A.Json -> State
-    stateFrom matchId = either (const UnexpectedError) (LocalMatch matchId)
+    justDecode :: forall v e. DecodeJson v => Either e A.Json -> Maybe v
+    justDecode = hush >=> (hush <<< decodeJson)
