@@ -82,7 +82,9 @@ server = getGameAction
           let state = C.summarize events
           case execute c events of
             Left e -> pure $ Left $ CommandError e
-            Right e -> pure $ Right $ track e state
+            Right e -> do
+              saveEvent e (M.Match matchId)
+              pure $ Right $ track e state
 
     getGame :: String -> Sem '[Lift IO] (Maybe C.State)
     getGame = runMatchWithFileSystemStore . getGame'

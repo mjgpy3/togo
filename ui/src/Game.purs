@@ -14,7 +14,6 @@ import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Web.Event.Event (Event)
 import Web.Event.Event as Event
-import Web.UIEvent.MouseEvent as ME
 import Data.Argonaut.Core as A
 import Data.Argonaut.Decode (class DecodeJson, decodeJson, (.:))
 import Halogen.HTML.CSS (style)
@@ -32,6 +31,10 @@ instance eqPosition :: Eq Position where
 data Stone
   = Black
   | White
+
+instance showStone :: Show Stone where
+  show Black = "Black"
+  show White = "White"
 
 newtype Game
   = Game { whiteCaptures :: Int
@@ -107,6 +110,7 @@ data Action
   = StartNewLocalMatch Event
   | HighlightStone Position
   | ClearHighlightedStone
+  | PlaceStone Stone MatchIdentifier Position
 
 component :: forall f i o m. MonadAff m => H.Component HH.HTML f i o m
 component =
@@ -135,14 +139,15 @@ render UnexpectedError = HH.p_ [ HH.text "An unexpected error has occured, pleas
 render (LocalMatch m) = renderGame m
 
 renderGame :: forall m. Match -> H.ComponentHTML Action () m
-renderGame { game: Game g, currentHighlight } =
+renderGame { game: Game g, currentHighlight, matchId } =
   HH.table [ style do CSS.key (CSS.fromString "border-spacing") (CSS.px 0.0)
                       CSS.border CSS.solid (CSS.px 2.0) (CSS.graytone 0.2) 
-                      CSS.backgroundColor (fromMaybe (CSS.graytone 0.5) $ CSS.fromHexString "#966F33") ] $ do
+                      CSS.backgroundColor (fromMaybe (CSS.graytone 0.5) $ CSS.fromHexString "#966F33")
+           , HE.onMouseOut (Just <<< const ClearHighlightedStone) ] $ do
     y <- Array.range 0 g.height
     pure $ HH.tr_ $ do
       x <- Array.range 0 g.width
-      pure $ HH.td [ style do CSS.border CSS.solid (CSS.px 2.0) CSS.black
+      pure $ HH.td [ style do CSS.border CSS.solid (CSS.px 0.5) CSS.black
                               CSS.height (CSS.rem 2.5)
                               CSS.width (CSS.rem 2.5) ]
         [ HH.table [ style do CSS.key (CSS.fromString "border-spacing") (CSS.px 0.0)
@@ -152,7 +157,7 @@ renderGame { game: Game g, currentHighlight } =
             (
               let
                 highlightable x' y' = [ HE.onMouseOver (Just <<< const (HighlightStone $ Pos { x: x', y: y' }))
-                                      , HE.onMouseOut (Just <<< const ClearHighlightedStone)
+                                      , HE.onClick (Just <<< const (PlaceStone g.turn matchId $ Pos { x: x', y: y' }))
                                       ]
 
                 withinBounds x' y' =
@@ -182,9 +187,12 @@ noContent = AXRB.string ""
 
 handleAction :: forall o m. MonadAff m => Action -> H.HalogenM (State Match) Action () o m Unit
 handleAction = case _ of
-  ClearHighlightedStone -> do
+  PlaceStone stone (MatchIdentifier matchId) (Pos p) -> do
+     gameResponse <- H.liftAff $ AX.post AXRF.json ("/api/match/" <> matchId <> "/" <> show stone <> "/place/" <> show p.x <> "/" <> show p.y) noContent
+     decodeAndRenderGame matchId gameResponse.body
+  ClearHighlightedStone ->
     H.modify_ $ map (\m -> m { currentHighlight = Nothing })
-  HighlightStone pos -> do
+  HighlightStone pos ->
     H.modify_ $ map (\m -> m { currentHighlight = Just pos })
   StartNewLocalMatch event -> do
     H.liftEffect $ Event.preventDefault event
@@ -192,13 +200,20 @@ handleAction = case _ of
     createMatchResponse <- H.liftAff $ AX.post AXRF.json "/api/match" noContent
     case justDecode createMatchResponse.body of
       Nothing -> H.put UnexpectedError
-      Just (MatchIdentifier matchId) -> do
-        gameResponse <- H.liftAff $ AX.get AXRF.json ("/api/match/" <> matchId <> "/game")
-        case justDecode gameResponse.body of
-          Nothing -> H.put UnexpectedError
-          Just game ->
-            H.put $ LocalMatch { matchId: MatchIdentifier matchId, currentHighlight: Nothing, game }
+      Just (MatchIdentifier matchId) -> loadGameByMatchId matchId
 
   where
     justDecode :: forall v e. DecodeJson v => Either e A.Json -> Maybe v
     justDecode = hush >=> (hush <<< decodeJson)
+
+    loadGameByMatchId :: forall o' m'. MonadAff m' => String -> H.HalogenM (State Match) Action () o' m' Unit
+    loadGameByMatchId matchId = do
+      gameResponse <- H.liftAff $ AX.get AXRF.json ("/api/match/" <> matchId <> "/game")
+      decodeAndRenderGame matchId gameResponse.body
+
+    decodeAndRenderGame :: forall o' m' e. MonadAff m' => String -> Either e A.Json -> H.HalogenM (State Match) Action () o' m' Unit
+    decodeAndRenderGame matchId gameBody = do
+      case justDecode gameBody of
+        Nothing -> H.put UnexpectedError
+        Just game ->
+          H.put $ LocalMatch { matchId: MatchIdentifier matchId, currentHighlight: Nothing, game }
