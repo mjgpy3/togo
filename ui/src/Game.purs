@@ -37,6 +37,11 @@ instance showStone :: Show Stone where
   show Black = "Black"
   show White = "White"
 
+instance eqStone :: Eq Stone where
+  eq Black Black = true
+  eq White White = true
+  eq _ _ = false
+
 newtype Game
   = Game { whiteCaptures :: Int
          , whitePositions :: Array Position
@@ -139,6 +144,55 @@ render Loading = HH.p_ [ HH.text "Loading..." ]
 render UnexpectedError = HH.p_ [ HH.text "An unexpected error has occured, please try again later..." ]
 render (LocalMatch m) = renderGame m
 
+renderHighlightChunks :: forall m. Match -> Int -> Int -> H.ComponentHTML Action () m
+renderHighlightChunks { game: Game g, currentHighlight, matchId } x y =
+  HH.table [ style do CSS.key (CSS.fromString "border-spacing") (CSS.px 0.0)
+                      CSS.height (CSS.pct 100.0)
+                      CSS.width (CSS.pct 100.0)
+           ]
+    (
+      let
+        mkHighlightable x' y' = [ HE.onMouseOver (Just <<< const (HighlightStone $ Pos { x: x', y: y' }))
+                                , HE.onClick (Just <<< const (PlaceStone g.turn matchId $ Pos { x: x', y: y' }))
+                                ]
+
+        withinBounds x' y' =
+          0 <= x' && x' < g.width && 0 <= y' && y' < g.height
+
+        notTaken x' y' =
+          not (Pos { x: x', y: y' } `elem` (g.whitePositions <> g.blackPositions))
+
+        highlighted x' y' =
+          Just (Pos { x: x', y: y' }) == currentHighlight
+
+        highlight = [ style do CSS.backgroundColor (fromMaybe (CSS.graytone 0.5) $ CSS.fromHexString "#FF0") ]
+
+        chunkAt x' y' =
+          HH.td (  (if withinBounds x' y' && notTaken x' y' then mkHighlightable x' y' else [])
+                <> (if highlighted x' y' then highlight else [])) []
+      in
+        [ HH.tr_ [ chunkAt (x - 1) (y - 1)
+                 , chunkAt x (y - 1)
+                 ]
+        , HH.tr_ [ chunkAt (x - 1) y
+                 , chunkAt x y
+                 ]
+        ]
+    )
+
+renderStone :: forall m. Stone -> H.ComponentHTML Action () m
+renderStone stone =
+  HH.span [ style do CSS.display CSS.grid
+                     CSS.position CSS.relative
+                     CSS.right (CSS.rem (-1.4))
+                     CSS.bottom (CSS.rem (-2.8))
+                     CSS.backgroundColor (if stone == White then CSS.white else CSS.black)
+                     CSS.height (CSS.rem 2.5)
+                     CSS.width (CSS.rem 2.5)
+                     CSS.borderRadius (CSS.pct 50.0) (CSS.pct 50.0) (CSS.pct 50.0) (CSS.pct 50.0)
+          ]
+    []
+
 renderGame :: forall m. Match -> H.ComponentHTML Action () m
 renderGame { game: Game g, currentHighlight, matchId } =
   HH.table [ style do CSS.key (CSS.fromString "border-spacing") (CSS.px 0.0)
@@ -146,44 +200,15 @@ renderGame { game: Game g, currentHighlight, matchId } =
                       CSS.backgroundColor (fromMaybe (CSS.graytone 0.5) $ CSS.fromHexString "#966F33")
            , HE.onMouseOut (Just <<< const ClearHighlightedStone) ] $ do
     y <- Array.range 0 g.height
-    pure $ HH.tr_ $ do
+    pure $ HH.tr [ style do CSS.maxHeight (CSS.rem 2.5) ] $ do
       x <- Array.range 0 g.width
       pure $ HH.td [ style do CSS.border CSS.solid (CSS.px 0.5) CSS.black
                               CSS.height (CSS.rem 2.5)
                               CSS.width (CSS.rem 2.5) ]
-        [ HH.table [ style do CSS.key (CSS.fromString "border-spacing") (CSS.px 0.0)
-                              CSS.height (CSS.pct 100.0)
-                              CSS.width (CSS.pct 100.0)
-                   ]
-            (
-              let
-                mkHighlightable x' y' = [ HE.onMouseOver (Just <<< const (HighlightStone $ Pos { x: x', y: y' }))
-                                        , HE.onClick (Just <<< const (PlaceStone g.turn matchId $ Pos { x: x', y: y' }))
-                                        ]
-
-                withinBounds x' y' =
-                  0 <= x' && x' < g.width && 0 <= y' && y' < g.height
-
-                notTaken x' y' =
-                  not (Pos { x: x', y: y' } `elem` (g.whitePositions <> g.blackPositions))
-
-                highlighted x' y' =
-                  Just (Pos { x: x', y: y' }) == currentHighlight
-
-                highlight = [ style do CSS.backgroundColor (fromMaybe (CSS.graytone 0.5) $ CSS.fromHexString "#FF0") ]
-
-                chunkAt x' y' =
-                  HH.td ((if withinBounds x' y' && notTaken x' y' then mkHighlightable x' y' else []) <> (if highlighted x' y' then highlight else [])) []
-              in
-                [ HH.tr_ [ chunkAt (x - 1) (y - 1)
-                         , chunkAt x (y - 1)
-                         ]
-                , HH.tr_ [ chunkAt (x - 1) y
-                         , chunkAt x y
-                         ]
-                ]
-            )
-        ]
+        (  (if (Pos {x, y}) `elem` g.whitePositions then [ renderStone White ] else [])
+        <> (if (Pos {x, y}) `elem` g.blackPositions then [ renderStone Black ] else [])
+        <> [ renderHighlightChunks { game: Game g, currentHighlight, matchId } x y ]
+        )
 
 
 noContent :: AXRB.RequestBody
