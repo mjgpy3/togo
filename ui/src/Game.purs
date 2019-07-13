@@ -3,23 +3,23 @@ module Game where
 import Prelude
 
 import Affjax as AX
-import Affjax.ResponseFormat as AXRF
 import Affjax.RequestBody as AXRB
+import Affjax.ResponseFormat as AXRF
+import CSS as CSS
+import Data.Argonaut.Core as A
+import Data.Argonaut.Decode (class DecodeJson, decodeJson, (.:))
+import Data.Array as Array
 import Data.Either (hush, Either(Left))
+import Data.Foldable (elem)
 import Data.Maybe (Maybe(..), fromMaybe)
 import Effect.Aff.Class (class MonadAff)
 import Halogen as H
 import Halogen.HTML as HH
+import Halogen.HTML.CSS (style)
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Web.Event.Event (Event)
 import Web.Event.Event as Event
-import Data.Argonaut.Core as A
-import Data.Argonaut.Decode (class DecodeJson, decodeJson, (.:))
-import Halogen.HTML.CSS (style)
-import CSS as CSS
-import Data.Array as Array
-import Data.Foldable (elem)
 
 newtype Position
   = Pos { x :: Int
