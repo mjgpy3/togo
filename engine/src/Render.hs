@@ -35,7 +35,7 @@ padRow state y' = intersperse '-' rawRow ++ "\n"
          _ -> "+"
 
 blackPiece :: Char
-blackPiece = '○'
+blackPiece = '0'
 
 whitePiece :: Char
-whitePiece = '⏺'
+whitePiece = 'O'
