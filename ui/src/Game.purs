@@ -103,6 +103,7 @@ instance decodeJsonGame :: DecodeJson Game where
     blackCaptures <- black .: "captures"
     blackPositions <- black .: "positions"
     turn <- obj .: "turn"
+    gameState <- obj .: "gameState"
     pure $ Game { whiteCaptures
                 , whitePositions
                 , blackCaptures
@@ -110,7 +111,7 @@ instance decodeJsonGame :: DecodeJson Game where
                 , turn
                 , height: 19
                 , width: 19
-                , over: false
+                , over: gameState == "EndGame"
                 }
 
 instance decodeJsonMatchIdentifier :: DecodeJson MatchIdentifier where
@@ -251,14 +252,17 @@ renderGame { game: Game g, currentHighlight, matchId } =
       <> (if highlighted x y then [highlight] else [])
 
     highlighted x y =
-      Just (Pos { x, y }) == currentHighlight
+      not g.over && Just (Pos { x, y }) == currentHighlight
 
     highlight = style do CSS.border CSS.solid (CSS.px 1.0) CSS.yellow
 
     openSlotEvents x y =
-      [ HE.onMouseOver (Just <<< const (HighlightStone $ Pos { x: x, y: y }))
-      , HE.onClick (Just <<< const (PlaceStone g.turn matchId $ Pos { x: x, y: y }))
-      ]
+      if g.over
+      then []
+      else
+        [ HE.onMouseOver (Just <<< const (HighlightStone $ Pos { x: x, y: y }))
+        , HE.onClick (Just <<< const (PlaceStone g.turn matchId $ Pos { x: x, y: y }))
+        ]
 
     grid =
       HH.table
