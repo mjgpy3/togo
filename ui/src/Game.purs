@@ -125,6 +125,7 @@ data Action
   | ClearHighlightedStone
   | PlaceStone Stone MatchIdentifier Position
   | Pass Stone MatchIdentifier
+  | Resign Stone MatchIdentifier
 
 component :: forall f i o m. MonadAff m => H.Component HH.HTML f i o m
 component =
@@ -162,14 +163,19 @@ render (LocalMatchWithTurnError m err) = renderGameWithControls m (Just err)
 
 renderGameWithControls :: forall m. Match -> Maybe String -> H.ComponentHTML Action () m
 renderGameWithControls m@{ game: Game g } err =
-  HH.div_
-    [ passButton
-    , message
-    , renderGame m
-    ]
+  HH.div_ $
+    ( if g.over
+      then
+        [ HH.p [] [ HH.text "Game ended!" ] ]
+      else
+        [ passButton
+        , resignButton
+        , errorMessage
+        ]
+    ) <> [ renderGame m ]
 
     where
-      message =
+      errorMessage =
         HH.p
           [ style do CSS.color CSS.red
                      CSS.paddingLeft (CSS.rem 1.0)
@@ -182,6 +188,13 @@ renderGameWithControls m@{ game: Game g } err =
           , HE.onClick (const $ Just $ Pass g.turn m.matchId)
           ]
           [ HH.text "Pass" ]
+
+      resignButton =
+        HH.button
+          [ style do CSS.display CSS.inlineBlock
+          , HE.onClick (const $ Just $ Resign g.turn m.matchId)
+          ]
+          [ HH.text "Resign" ]
 
 renderStone :: forall m. Stone -> H.ComponentHTML Action () m
 renderStone stone =
@@ -274,12 +287,12 @@ noContent = AXRB.string ""
 
 handleAction :: forall o m. MonadAff m => Action -> H.HalogenM (State Match) Action () o m Unit
 handleAction = case _ of
-  Pass stone (MatchIdentifier matchId) -> do
-    gameResponse <- H.liftAff $ AX.post AXRF.string ("/api/match/" <> matchId <> "/" <> show stone <> "/pass") noContent
-    decodeAndRenderGame matchId gameResponse
-  PlaceStone stone (MatchIdentifier matchId) (Pos p) -> do
-    gameResponse <- H.liftAff $ AX.post AXRF.string ("/api/match/" <> matchId <> "/" <> show stone <> "/place/" <> show p.x <> "/" <> show p.y) noContent
-    decodeAndRenderGame matchId gameResponse
+  Pass stone (MatchIdentifier matchId) ->
+    execute ("/api/match/" <> matchId <> "/" <> show stone <> "/pass") matchId
+  Resign stone (MatchIdentifier matchId) ->
+    execute ("/api/match/" <> matchId <> "/" <> show stone <> "/resign") matchId
+  PlaceStone stone (MatchIdentifier matchId) (Pos p) ->
+    execute ("/api/match/" <> matchId <> "/" <> show stone <> "/place/" <> show p.x <> "/" <> show p.y) matchId
   ClearHighlightedStone ->
     H.modify_ $ map (\m -> m { currentHighlight = Nothing })
   HighlightStone pos ->
@@ -293,6 +306,10 @@ handleAction = case _ of
       Just (MatchIdentifier matchId) -> loadGameByMatchId matchId
 
   where
+    execute commandUrl matchId = do
+      gameResponse <- H.liftAff $ AX.post AXRF.string commandUrl noContent
+      decodeAndRenderGame matchId gameResponse
+
     justDecode :: forall v e. DecodeJson v => Either e A.Json -> Maybe v
     justDecode = hush >=> (hush <<< decodeJson)
 
