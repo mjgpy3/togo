@@ -13,7 +13,8 @@ import Data.Argonaut.Parser (jsonParser)
 import Data.Array as Array
 import Data.Either (hush, Either(Right, Left))
 import Data.Foldable (elem)
-import Data.Maybe (Maybe(..), fromMaybe)
+import Data.Maybe (Maybe(..))
+import Data.Maybe as M
 import Effect.Aff.Class (class MonadAff)
 import Halogen as H
 import Halogen.HTML as HH
@@ -123,6 +124,7 @@ data Action
   | HighlightStone Position
   | ClearHighlightedStone
   | PlaceStone Stone MatchIdentifier Position
+  | Pass Stone MatchIdentifier
 
 component :: forall f i o m. MonadAff m => H.Component HH.HTML f i o m
 component =
@@ -138,7 +140,6 @@ withTurnError _ Loading = Loading
 withTurnError _ UnexpectedError = UnexpectedError
 withTurnError e (LocalMatch v) = LocalMatchWithTurnError v e
 withTurnError e (LocalMatchWithTurnError v _) = LocalMatchWithTurnError v e
-
 
 initialState :: forall i. i -> State Match
 initialState _ = NoneYet
@@ -156,12 +157,31 @@ render NoneYet =
     ]
 render Loading = HH.p_ [ HH.text "Loading..." ]
 render UnexpectedError = HH.p_ [ HH.text "An unexpected error has occured, please try again later..." ]
-render (LocalMatch m) = renderGame m
-render (LocalMatchWithTurnError m err) =
+render (LocalMatch m) = renderGameWithControls m Nothing
+render (LocalMatchWithTurnError m err) = renderGameWithControls m (Just err)
+
+renderGameWithControls :: forall m. Match -> Maybe String -> H.ComponentHTML Action () m
+renderGameWithControls m@{ game: Game g } err =
   HH.div_
-    [ HH.p [ style do CSS.color CSS.red ] [ HH.text err ]
+    [ passButton
+    , message
     , renderGame m
     ]
+
+    where
+      message =
+        HH.p
+          [ style do CSS.color CSS.red
+                     CSS.paddingLeft (CSS.rem 1.0)
+                     CSS.display CSS.inlineBlock
+          ] [ HH.text (M.fromMaybe " " err) ]
+
+      passButton =
+        HH.button
+          [ style do CSS.display CSS.inlineBlock
+          , HE.onClick (const $ Just $ Pass g.turn m.matchId)
+          ]
+          [ HH.text "Pass" ]
 
 renderStone :: forall m. Stone -> H.ComponentHTML Action () m
 renderStone stone =
@@ -185,6 +205,7 @@ renderGame { game: Game g, currentHighlight, matchId } =
     containerStyle =
       style do CSS.backgroundColor wood
                CSS.position CSS.absolute
+               CSS.top (CSS.rem 3.0)
                CSS.zIndex (-1)
                CSS.width (CSS.rem (2.737 * toNumber g.width))
                CSS.height (CSS.rem (2.736 * toNumber g.height))
@@ -246,16 +267,19 @@ renderGame { game: Game g, currentHighlight, matchId } =
 
 
 wood :: CSS.Color
-wood = fromMaybe (CSS.graytone 0.5) $ CSS.fromHexString "#966F33"
+wood = M.fromMaybe (CSS.graytone 0.5) $ CSS.fromHexString "#966F33"
 
 noContent :: AXRB.RequestBody
 noContent = AXRB.string ""
 
 handleAction :: forall o m. MonadAff m => Action -> H.HalogenM (State Match) Action () o m Unit
 handleAction = case _ of
+  Pass stone (MatchIdentifier matchId) -> do
+    gameResponse <- H.liftAff $ AX.post AXRF.string ("/api/match/" <> matchId <> "/" <> show stone <> "/pass") noContent
+    decodeAndRenderGame matchId gameResponse
   PlaceStone stone (MatchIdentifier matchId) (Pos p) -> do
-     gameResponse <- H.liftAff $ AX.post AXRF.string ("/api/match/" <> matchId <> "/" <> show stone <> "/place/" <> show p.x <> "/" <> show p.y) noContent
-     decodeAndRenderGame matchId gameResponse
+    gameResponse <- H.liftAff $ AX.post AXRF.string ("/api/match/" <> matchId <> "/" <> show stone <> "/place/" <> show p.x <> "/" <> show p.y) noContent
+    decodeAndRenderGame matchId gameResponse
   ClearHighlightedStone ->
     H.modify_ $ map (\m -> m { currentHighlight = Nothing })
   HighlightStone pos ->

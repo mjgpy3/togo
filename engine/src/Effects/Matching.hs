@@ -11,7 +11,6 @@ module Effects.Matching
   , getMatch
   ) where
 
-import Control.Monad (unless)
 import Core(Event(..))
 import qualified Match as M
 import Polysemy
@@ -50,10 +49,7 @@ runMatchWithFileSystemStore = interpret $ \case
 
   where
     baseDir :: IO String
-    baseDir = do
-      dir <- fromMaybe "/tmp/togo/" <$> lookupEnv "DB_DIR"
-      putStrLn dir
-      pure dir
+    baseDir = fromMaybe "/tmp/togo/" <$> lookupEnv "DB_DIR"
 
     matchDir :: M.Match -> IO String
     matchDir match = do
