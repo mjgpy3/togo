@@ -45,6 +45,8 @@ library:
   - guid
   - directory
   - aeson
+  - shelly
+  - text
 
 executables:
   engine-cli:
