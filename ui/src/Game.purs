@@ -5,11 +5,13 @@ import Prelude
 import Affjax as AX
 import Affjax.RequestBody as AXRB
 import Affjax.ResponseFormat as AXRF
+import Affjax.StatusCode as AXS
 import CSS as CSS
 import Data.Argonaut.Core as A
 import Data.Argonaut.Decode (class DecodeJson, decodeJson, (.:))
+import Data.Argonaut.Parser (jsonParser)
 import Data.Array as Array
-import Data.Either (hush, Either(Left))
+import Data.Either (hush, Either(Right, Left))
 import Data.Foldable (elem)
 import Data.Maybe (Maybe(..), fromMaybe)
 import Effect.Aff.Class (class MonadAff)
@@ -65,6 +67,7 @@ data State a
   | Loading
   | UnexpectedError
   | LocalMatch a
+  | LocalMatchWithTurnError a String
 
 data MatchIdentifier = MatchIdentifier String
 
@@ -73,6 +76,7 @@ instance functorGameState :: Functor State where
   map _ Loading = Loading
   map _ UnexpectedError = UnexpectedError
   map f (LocalMatch v) = LocalMatch $ f v
+  map f (LocalMatchWithTurnError v e) = LocalMatchWithTurnError (f v) e
 
 instance decodeJsonPosition :: DecodeJson Position where
   decodeJson json = do
@@ -128,6 +132,14 @@ component =
     , eval: H.mkEval $ H.defaultEval { handleAction = handleAction }
     }
 
+withTurnError :: forall a. String -> State a -> State a
+withTurnError _ NoneYet = NoneYet
+withTurnError _ Loading = Loading
+withTurnError _ UnexpectedError = UnexpectedError
+withTurnError e (LocalMatch v) = LocalMatchWithTurnError v e
+withTurnError e (LocalMatchWithTurnError v _) = LocalMatchWithTurnError v e
+
+
 initialState :: forall i. i -> State Match
 initialState _ = NoneYet
 
@@ -145,6 +157,11 @@ render NoneYet =
 render Loading = HH.p_ [ HH.text "Loading..." ]
 render UnexpectedError = HH.p_ [ HH.text "An unexpected error has occured, please try again later..." ]
 render (LocalMatch m) = renderGame m
+render (LocalMatchWithTurnError m err) =
+  HH.div_
+    [ HH.p [ style do CSS.color CSS.red ] [ HH.text err ]
+    , renderGame m
+    ]
 
 renderStone :: forall m. Stone -> H.ComponentHTML Action () m
 renderStone stone =
@@ -237,8 +254,8 @@ noContent = AXRB.string ""
 handleAction :: forall o m. MonadAff m => Action -> H.HalogenM (State Match) Action () o m Unit
 handleAction = case _ of
   PlaceStone stone (MatchIdentifier matchId) (Pos p) -> do
-     gameResponse <- H.liftAff $ AX.post AXRF.json ("/api/match/" <> matchId <> "/" <> show stone <> "/place/" <> show p.x <> "/" <> show p.y) noContent
-     decodeAndRenderGame matchId gameResponse.body
+     gameResponse <- H.liftAff $ AX.post AXRF.string ("/api/match/" <> matchId <> "/" <> show stone <> "/place/" <> show p.x <> "/" <> show p.y) noContent
+     decodeAndRenderGame matchId gameResponse
   ClearHighlightedStone ->
     H.modify_ $ map (\m -> m { currentHighlight = Nothing })
   HighlightStone pos ->
@@ -257,12 +274,26 @@ handleAction = case _ of
 
     loadGameByMatchId :: forall o' m'. MonadAff m' => String -> H.HalogenM (State Match) Action () o' m' Unit
     loadGameByMatchId matchId = do
-      gameResponse <- H.liftAff $ AX.get AXRF.json ("/api/match/" <> matchId <> "/game")
-      decodeAndRenderGame matchId gameResponse.body
+      gameResponse <- H.liftAff $ AX.get AXRF.string ("/api/match/" <> matchId <> "/game")
+      decodeAndRenderGame matchId gameResponse
 
-    decodeAndRenderGame :: forall o' m' e. MonadAff m' => String -> Either e A.Json -> H.HalogenM (State Match) Action () o' m' Unit
-    decodeAndRenderGame matchId gameBody = do
-      case justDecode gameBody of
-        Nothing -> H.put UnexpectedError
-        Just game ->
-          H.put $ LocalMatch { matchId: MatchIdentifier matchId, currentHighlight: Nothing, game }
+    decodeAndRenderGame :: forall o' m' e. MonadAff m' => String -> AX.Response (Either e String) -> H.HalogenM (State Match) Action () o' m' Unit
+    decodeAndRenderGame matchId gameResponse =
+      case gameResponse.status of
+        AXS.StatusCode 200 ->
+          case gameResponse.body of
+            Right v ->
+              case justDecode (jsonParser v) of
+                Just game ->
+                  H.put $ LocalMatch { matchId: MatchIdentifier matchId, currentHighlight: Nothing, game }
+                _ -> H.put UnexpectedError
+            _ -> H.put UnexpectedError
+
+        AXS.StatusCode 400 ->
+          case gameResponse.body of
+            Right error ->
+              H.modify_ $ withTurnError error
+            _ -> H.put UnexpectedError
+
+        _ ->
+          H.put UnexpectedError
