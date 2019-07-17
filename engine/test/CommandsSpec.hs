@@ -10,7 +10,15 @@ place stone = Place stone . uncurry Pos
 
 tests :: SpecWith ()
 tests =
-  describe "Commands" $
+  describe "Commands" $ do
+    describe "when passing" $
+      it "cannot happen when a game has ended" $
+        execute (Pass Black) endedGame `shouldBe` Left GameEnded
+
+    describe "when resigning" $
+      it "cannot happen when a game has ended" $
+        execute (Resign Black) endedGame `shouldBe` Left GameEnded
+
     describe "when placing a stone" $ do
       it "results in an event" $
         execute (place Black (5, 4)) emptyGame `shouldBe` Right (StonePlaced Black (Pos 5 4))
